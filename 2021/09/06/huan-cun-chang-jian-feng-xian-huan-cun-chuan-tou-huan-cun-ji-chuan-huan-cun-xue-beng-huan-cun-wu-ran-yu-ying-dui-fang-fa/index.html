@@ -29,7 +29,8 @@
 
     <script src="/libs/jquery/jquery.min.js"></script>
 
-<meta name="generator" content="Hexo 5.4.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+<meta name="generator" content="Hexo 5.4.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
 
 
 
@@ -462,40 +463,40 @@
 <h4 id="2-缓存击穿"><a href="#2-缓存击穿" class="headerlink" title="2 缓存击穿"></a>2 缓存击穿</h4><p>​ 缓存击穿是指由于某种原因缓存中的数据已失效（如缓存过期），而此时有大量的请求来获取该数据，最终由于缓存中没有数据，所有请求都落在实际的数据源（数据库）上。通常热点 key 的失效，容易导致缓存击穿。</p>
 <h5 id="2-1-热点数据管理"><a href="#2-1-热点数据管理" class="headerlink" title="2.1 热点数据管理"></a>2.1 热点数据管理</h5><p>​ 热点数据由代码来手动管理，缓存击穿是仅针对热点数据被自动失效才引发的问题，对于这类数据，可以直接由开发者通过代码来有计划地完成更新、失效，避免由缓存的策略自动管理。极端情况可能设置热点永不过期。</p>
 <h5 id="2-2-加锁同步"><a href="#2-2-加锁同步" class="headerlink" title="2.2 加锁同步"></a>2.2 加锁同步</h5><p>​ 以请求该数据的 Key 值为锁，使得只有第一个请求可以流入到真实的数据源中，其他线程采取阻塞或重试策略。当第一个请求从数据源中获取到数据后，在将数据写入到缓存中。如果是进程内缓存出现问题，施加普通互斥锁即可，如果是分布式缓存中出现的问题，就施加分布式锁，这样数据源就不会同时收到大量针对同一个数据的请求了。下面给出伪代码的实现，这里没有区分进程内的情况与分布式的情况。</p>
-<pre class=" language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">static</span> String <span class="token function">getData</span><span class="token punctuation">(</span>String key<span class="token punctuation">)</span>  <span class="token operator">&amp;</span>#<span class="token number">123</span><span class="token punctuation">;</span>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">static</span> String <span class="token function">getData</span><span class="token punctuation">(</span>String key<span class="token punctuation">)</span>  <span class="token punctuation">{</span>
     <span class="token comment" spellcheck="true">//从缓存中获取数据</span>
     String data <span class="token operator">=</span> <span class="token function">getDataFromCache</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token comment" spellcheck="true">//缓存中存在数据直接返回</span>
-    <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token operator">&amp;</span>#<span class="token number">123</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
         <span class="token keyword">return</span> data<span class="token punctuation">;</span>
-    <span class="token operator">&amp;</span>#<span class="token number">125</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
     <span class="token comment" spellcheck="true">//尝试获取锁，并成功</span>
-    <span class="token keyword">if</span> <span class="token punctuation">(</span>lock<span class="token punctuation">.</span><span class="token function">tryLock</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span>#<span class="token number">123</span><span class="token punctuation">;</span>
-        <span class="token keyword">try</span> <span class="token operator">&amp;</span>#<span class="token number">123</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>lock<span class="token punctuation">.</span><span class="token function">tryLock</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">try</span> <span class="token punctuation">{</span>
             <span class="token comment" spellcheck="true">//再次尝试从缓存中获取数据</span>
             data <span class="token operator">=</span> <span class="token function">getDataFromCache</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
             <span class="token comment" spellcheck="true">//缓存中存在数据直接返回</span>
-            <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token operator">&amp;</span>#<span class="token number">123</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
                 <span class="token keyword">return</span> data<span class="token punctuation">;</span>
-            <span class="token operator">&amp;</span>#<span class="token number">125</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
             <span class="token comment" spellcheck="true">//从DB中获取数据</span>
             data <span class="token operator">=</span> <span class="token function">getDataFromDB</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
             <span class="token comment" spellcheck="true">//数据存在设置缓存</span>
-            <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token operator">&amp;</span>#<span class="token number">123</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
                 <span class="token function">setCache</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
-            <span class="token operator">&amp;</span>#<span class="token number">125</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
             <span class="token keyword">return</span> data<span class="token punctuation">;</span>
-        <span class="token operator">&amp;</span>#<span class="token number">125</span><span class="token punctuation">;</span> <span class="token keyword">finally</span> <span class="token operator">&amp;</span>#<span class="token number">123</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
             <span class="token comment" spellcheck="true">// 释放获取到的锁</span>
             lock<span class="token punctuation">.</span><span class="token function">unlock</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
-        <span class="token operator">&amp;</span>#<span class="token number">125</span><span class="token punctuation">;</span>
-    <span class="token operator">&amp;</span>#<span class="token number">125</span><span class="token punctuation">;</span> <span class="token keyword">else</span> <span class="token operator">&amp;</span>#<span class="token number">123</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
     <span class="token comment" spellcheck="true">//尝试获取锁，但失败。线程sleep 100毫秒后，再次调用获取数据方法。</span>
         Thread<span class="token punctuation">.</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
         <span class="token keyword">return</span> <span class="token function">getData</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token operator">&amp;</span>#<span class="token number">125</span><span class="token punctuation">;</span>
-<span class="token operator">&amp;</span>#<span class="token number">125</span><span class="token punctuation">;</span>
-</code></pre>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <h4 id="3-缓存雪崩"><a href="#3-缓存雪崩" class="headerlink" title="3 缓存雪崩"></a>3 缓存雪崩</h4><p>​ 缓存击穿是针对单个热点数据失效，由大量请求击穿缓存而给真实数据源带来压力。而缓存雪崩侧是由于大量不同数据在短时间内一起失效，导致这些数据对应的大量请求在缓存层上无法命中，直接达到了真实的数据源，最终导致数据源在短时间内压力剧增。通常这种情况产生的原因有两种，一是由于缓存服务因某些原因崩溃后重启，此时也会造成大量数据同时失效;另外一种是由于大量公共数据从一次操作加载的，这样都可能出现由此载入缓存的大批数据具有相同的过期时间，在同一时刻一起失效。</p>
 <h5 id="3-1-增强缓存层可用性"><a href="#3-1-增强缓存层可用性" class="headerlink" title="3.1 增强缓存层可用性"></a>3.1 增强缓存层可用性</h5><p>​ 为了避免由于缓存层自崩溃后重启，大量请求导致缓存雪崩。缓存层应集群化部署，同时缓存系统前应该做相应的流量控制，超过阈值部分的流量直接丢弃或者先缓存在 MQ 中（流量高风过后在逐步处理请求）。</p>
 <h5 id="3-2-分散缓存过期时间"><a href="#3-2-分散缓存过期时间" class="headerlink" title="3.2 分散缓存过期时间"></a>3.2 分散缓存过期时间</h5><p>​ 为了避免大量热点数据在某个时间段内集中失效，我们在在设置失效时间时可以在原时间的基础上加上或者减去一个范围内的随机值。比如原本是一个小时过期，在缓存不同数据时，设置生存期为 55 分钟到 65 分钟之间的某个随机时间。</p>
