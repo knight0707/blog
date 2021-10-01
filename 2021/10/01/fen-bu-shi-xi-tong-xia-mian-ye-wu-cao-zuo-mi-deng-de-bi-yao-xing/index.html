@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="缓存常见风险(缓存穿透、缓存击穿、缓存雪崩、缓存污染)与应对方法, 叶易,叶卫根,架构,架构设计,业务架构,java,JVM,源码分析,netty,Spring,MQ,Kafka,redis,RocketMQ,分布式事务">
+    <meta name="keywords" content="分布式系统下面业务操作幂等的必要性, 叶易,叶卫根,架构,架构设计,业务架构,java,JVM,源码分析,netty,Spring,MQ,Kafka,redis,RocketMQ,分布式事务">
     <meta name="description" content="叶易的博客">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>缓存常见风险(缓存穿透、缓存击穿、缓存雪崩、缓存污染)与应对方法 | 叶易的博客</title>
+    <title>分布式系统下面业务操作幂等的必要性 | 叶易的博客</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -267,12 +267,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/9.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/17.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">缓存常见风险(缓存穿透、缓存击穿、缓存雪崩、缓存污染)与应对方法</h1>
+                    <h1 class="description center-align post-title">分布式系统下面业务操作幂等的必要性</h1>
                 </div>
             </div>
         </div>
@@ -388,12 +388,12 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/%E7%BC%93%E5%AD%98/">
-                                <span class="chip bg-color">缓存</span>
+                            <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                                <span class="chip bg-color">分布式</span>
                             </a>
                         
-                            <a href="/tags/redis/">
-                                <span class="chip bg-color">redis</span>
+                            <a href="/tags/%E5%B9%82%E7%AD%89/">
+                                <span class="chip bg-color">幂等</span>
                             </a>
                         
                     </div>
@@ -404,8 +404,8 @@
                     <div class="post-cate">
                         <i class="fas fa-bookmark fa-fw icon-category"></i>
                         
-                            <a href="/categories/%E7%BC%93%E5%AD%98/" class="post-category">
-                                缓存
+                            <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="post-category">
+                                分布式
                             </a>
                         
                     </div>
@@ -417,7 +417,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2021-09-06
+                    2021-10-01
                 </div>
                 
 
@@ -426,14 +426,14 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    3.6k
+                    3k
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                    12 分
+                    10 分
                 </div>
                 
 
@@ -453,84 +453,56 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h3 id="缓存常见风险-缓存穿透、缓存击穿、缓存雪崩、缓存污染-与应对方法"><a href="#缓存常见风险-缓存穿透、缓存击穿、缓存雪崩、缓存污染-与应对方法" class="headerlink" title="缓存常见风险(缓存穿透、缓存击穿、缓存雪崩、缓存污染)与应对方法"></a>缓存常见风险(缓存穿透、缓存击穿、缓存雪崩、缓存污染)与应对方法</h3><h4 id="1-缓存穿透"><a href="#1-缓存穿透" class="headerlink" title="1 缓存穿透"></a>1 缓存穿透</h4><p>​ 缓存穿透是指由于请求要获取的数据不在实际的数据源中（数据库），导致每次请求都会穿透缓存，直接落在实际的数据源（数据库）上。这类请求使得缓存层无法缓解真实数据源上的 CUP 或 I/O 压力，最终使得服务可用性与稳定性下降。产生这类问题通常是业务逻辑本身不合理或存在问题，或者可能是被恶意攻击。解决缓存穿透常用的方法有下面三种。</p>
-<h5 id="1-1-接口校验"><a href="#1-1-接口校验" class="headerlink" title="1.1 接口校验"></a>1.1 接口校验</h5><p>​ 正常业务流程中可能会存在少量访问不存在 key 的情况，如果有但的不存 key 的情况，很有可能系统遭受了恶意的攻击。对应这种问题有效的方法之一就是在服务调用的最外层对基本的数据合法性、用户访问权限进行校验。例如对于商品查询中，商品 ID 通过是正整数，对于负数业务层可以直接返回参数非法。</p>
-<h5 id="1-2-存储空值-业务合适的默认值"><a href="#1-2-存储空值-业务合适的默认值" class="headerlink" title="1.2 存储空值/业务合适的默认值"></a>1.2 存储空值/业务合适的默认值</h5><p>​ 虽然数据源（数据库）中，没有请求所要的数据，但可以考虑缓存空值或是业务合适的默认值来便向处理该问题。这么做要注意两点：<strong>一对应的缓存值要约定一个比较短的过期时间，使得一段时间内缓存最多被击穿一次。</strong> <strong>二后继业务在数据中新增了该 key 对应的数据，那应当在插入之后主动清理掉缓存的 Key 值。</strong></p>
-<h5 id="1-3-布隆过滤器（Bloom-Filter）"><a href="#1-3-布隆过滤器（Bloom-Filter）" class="headerlink" title="1.3 布隆过滤器（Bloom Filter）"></a>1.3 布隆过滤器（Bloom Filter）</h5><p>​ 对于恶意攻击导致的缓存穿透，通常会在缓存之前设置一个布隆过滤器来解决。这类恶意攻击者通常会刻意制造数据库中肯定不存在的 key 值，然后发送大量的请求。布隆过滤器可以将不存在的 key 值拦截在缓存层之外，让到达缓存层的流量，几乎在数据源（数据库）中都是存在 key 值的。布隆过滤器由一个 bitSet 和 一组 Hash 函数（算法）组成，是一种空间效率极高的概率型算法和数据结构，主要用来判断一个元素是否在集合中存在。通常会将数据源（数据库）中存在的 key 值全量放入布隆过滤器中。如果请求的 key 值布隆过滤器中找不到，那么将直接返回，这类 key 值在源数据源（数据库中）中一定不存在，但<strong>要注意请求的 key 在布隆过滤器中，也有可以最后 key 值在数据源中找不到</strong>，因为布隆过滤器可能存在漏判的情况，但经过多次 hash 后这种情况的概率通常会很低。下面给一个误判示例。</p>
-<img src="https://gitee.com/0909/blog/raw/master/img/bloomfilter.png" alt="bloomfilter" style="zoom:80%;" />
+                <h3 id="幂等性的常见实现方法"><a href="#幂等性的常见实现方法" class="headerlink" title="幂等性的常见实现方法"></a>幂等性的常见实现方法</h3><h4 id="1-为什么分布式系统要求业务操作的幂等性"><a href="#1-为什么分布式系统要求业务操作的幂等性" class="headerlink" title="1 为什么分布式系统要求业务操作的幂等性"></a>1 为什么分布式系统要求业务操作的幂等性</h4><pre><code>     幂等（idempotent）的概念源于数学，幂等的特点是任意多次执行所产生的影响均与一次执行产生的影响相同，不会因为多次的操作产生别的副作用。分布式系统由多个系统与节点组成，系统与节点在进行通信时由于网络、系统或节点的不稳定性导致一次系统与系统之间接口调用结果的三态，成功、失败、未知（请求已发出，但出现超时返回异常，此时下游系统可能已处理成功也可能处理失败）。系统在处理未知状态的调用结果时，通常会通过定时任务进行重试，这也就导致了位于下游的系统其接口可能会被相同的请求重复调用多次的情况。如果分布式系统没有保证各业务操作的幂等，必然导致由于多次相同操作带来的业务副作用（用户同一笔订单支付了多次，用户收到多条相同的发货通知、商品下面展示了多条用户同一时间的相同评论记录）。
+</code></pre>
+<h4 id="2-实现业务操作幂等性的常用方法"><a href="#2-实现业务操作幂等性的常用方法" class="headerlink" title="2 实现业务操作幂等性的常用方法"></a>2 实现业务操作幂等性的常用方法</h4><h5 id="2-1-业务Token"><a href="#2-1-业务Token" class="headerlink" title="2.1 业务Token"></a>2.1 业务Token</h5><p>​        业务Token通常的作法是在请求实际的业务操作前先去获取对应的业务Token，下游业务根据请求参数与时间生成Token，然后将Token写入缓存并设置一定的过期时间。真正发起业务请求时，请求发起方会将业务Token加入到请求参数中。下游业务收到业务请求后会先判段缓存中Token是否存在，如果存在则删除缓存中的业务Token并执行业务逻辑，如果不存则直接返回错误。<strong>这种做法实际是防重而非真正意思上的幂等</strong>。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/幂等.png" style="zoom:80%;" />
 
-<p>如上图，假设数据库中有 a 和 b 两条记录，通过布隆过滤器的 h1、h2、h3 三个散列函数得到 bitset 的位下标然后标记为 1，最后 a 与 b 两条记录在布隆过滤器中保存成功。然后查询请求要获取值为 c 的记录。c 虽然没有在数据库中但由于 c 的 h1(c)、h2(c)、h3(c) ,分别已数据 a 和 b 两条记录的 h2(a)、h1(b)、h3(a)值相同，最终导致误判。<strong>注意布隆过滤器有一个比较大的弊端就是存在其中的数据不支持删除。那么如果有数据要从隆过滤器剔除应该如何处理呢，剔除了又要存回隆过滤器该如何处理？</strong> 如果删除频率比较低且数据量少的话，可以用一个 HashMap 维护删除的记录，用于标记其不在隆过滤器内。请求时先走一下 HashMap，再走隆过滤器。那如果删除频率比较高且数据量很大的话，使用 HashMap 就不合适了。这个问题就先放这里吧。_ v _</p>
-<h4 id="2-缓存击穿"><a href="#2-缓存击穿" class="headerlink" title="2 缓存击穿"></a>2 缓存击穿</h4><p>​ 缓存击穿是指由于某种原因缓存中的数据已失效（如缓存过期），而此时有大量的请求来获取该数据，最终由于缓存中没有数据，所有请求都落在实际的数据源（数据库）上。通常热点 key 的失效，容易导致缓存击穿。</p>
-<h5 id="2-1-热点数据管理"><a href="#2-1-热点数据管理" class="headerlink" title="2.1 热点数据管理"></a>2.1 热点数据管理</h5><p>​ 热点数据由代码来手动管理，缓存击穿是仅针对热点数据被自动失效才引发的问题，对于这类数据，可以直接由开发者通过代码来有计划地完成更新、失效，避免由缓存的策略自动管理。极端情况可能设置热点永不过期。</p>
-<h5 id="2-2-加锁同步"><a href="#2-2-加锁同步" class="headerlink" title="2.2 加锁同步"></a>2.2 加锁同步</h5><p>​ 以请求该数据的 Key 值为锁，使得只有第一个请求可以流入到真实的数据源中，其他线程采取阻塞或重试策略。当第一个请求从数据源中获取到数据后，在将数据写入到缓存中。如果是进程内缓存出现问题，施加普通互斥锁即可，如果是分布式缓存中出现的问题，就施加分布式锁，这样数据源就不会同时收到大量针对同一个数据的请求了。下面给出伪代码的实现，这里没有区分进程内的情况与分布式的情况。</p>
-<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">static</span> String <span class="token function">getData</span><span class="token punctuation">(</span>String key<span class="token punctuation">)</span>  <span class="token punctuation">{</span>
-    <span class="token comment" spellcheck="true">//从缓存中获取数据</span>
-    String data <span class="token operator">=</span> <span class="token function">getDataFromCache</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token comment" spellcheck="true">//缓存中存在数据直接返回</span>
-    <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-        <span class="token keyword">return</span> data<span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-    <span class="token comment" spellcheck="true">//尝试获取锁，并成功</span>
-    <span class="token keyword">if</span> <span class="token punctuation">(</span>lock<span class="token punctuation">.</span><span class="token function">tryLock</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-        <span class="token keyword">try</span> <span class="token punctuation">{</span>
-            <span class="token comment" spellcheck="true">//再次尝试从缓存中获取数据</span>
-            data <span class="token operator">=</span> <span class="token function">getDataFromCache</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
-            <span class="token comment" spellcheck="true">//缓存中存在数据直接返回</span>
-            <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-                <span class="token keyword">return</span> data<span class="token punctuation">;</span>
-            <span class="token punctuation">}</span>
-            <span class="token comment" spellcheck="true">//从DB中获取数据</span>
-            data <span class="token operator">=</span> <span class="token function">getDataFromDB</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
-            <span class="token comment" spellcheck="true">//数据存在设置缓存</span>
-            <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-                <span class="token function">setCache</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">;</span>
-            <span class="token punctuation">}</span>
-            <span class="token keyword">return</span> data<span class="token punctuation">;</span>
-        <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
-            <span class="token comment" spellcheck="true">// 释放获取到的锁</span>
-            lock<span class="token punctuation">.</span><span class="token function">unlock</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
-        <span class="token punctuation">}</span>
-    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
-    <span class="token comment" spellcheck="true">//尝试获取锁，但失败。线程sleep 100毫秒后，再次调用获取数据方法。</span>
-        Thread<span class="token punctuation">.</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-        <span class="token keyword">return</span> <span class="token function">getData</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<h4 id="3-缓存雪崩"><a href="#3-缓存雪崩" class="headerlink" title="3 缓存雪崩"></a>3 缓存雪崩</h4><p>​ 缓存击穿是针对单个热点数据失效，由大量请求击穿缓存而给真实数据源带来压力。而缓存雪崩侧是由于大量不同数据在短时间内一起失效，导致这些数据对应的大量请求在缓存层上无法命中，直接达到了真实的数据源，最终导致数据源在短时间内压力剧增。通常这种情况产生的原因有两种，一是由于缓存服务因某些原因崩溃后重启，此时也会造成大量数据同时失效;另外一种是由于大量公共数据从一次操作加载的，这样都可能出现由此载入缓存的大批数据具有相同的过期时间，在同一时刻一起失效。</p>
-<h5 id="3-1-增强缓存层可用性"><a href="#3-1-增强缓存层可用性" class="headerlink" title="3.1 增强缓存层可用性"></a>3.1 增强缓存层可用性</h5><p>​ 为了避免由于缓存层自崩溃后重启，大量请求导致缓存雪崩。缓存层应集群化部署，同时缓存系统前应该做相应的流量控制，超过阈值部分的流量直接丢弃或者先缓存在 MQ 中（流量高风过后在逐步处理请求）。</p>
-<h5 id="3-2-分散缓存过期时间"><a href="#3-2-分散缓存过期时间" class="headerlink" title="3.2 分散缓存过期时间"></a>3.2 分散缓存过期时间</h5><p>​ 为了避免大量热点数据在某个时间段内集中失效，我们在在设置失效时间时可以在原时间的基础上加上或者减去一个范围内的随机值。比如原本是一个小时过期，在缓存不同数据时，设置生存期为 55 分钟到 65 分钟之间的某个随机时间。</p>
-<h4 id="4-缓存污染"><a href="#4-缓存污染" class="headerlink" title="4 缓存污染"></a>4 缓存污染</h4><p>​ 所谓的缓存污染是指缓存中的数据与真实数据源中的数据不一致的情况。虽然缓存通常不追求强一致性，但这我们应当最大程度上保证缓存中的数据与真实数据源中的数据一致，并通过某种手段保证数据的最终的一致性。</p>
-<p>​ 缓存污染大多数是由开发者更新缓存不规范造成的，比如执行某类业务操作，先更新了缓存中某些值，然后再执行业务逻辑更新数据源中的数据，但由于某些原因（后继业务发生异常回滚了）最终没有成功写入到数据源，此时缓存的数据是新的，而数据源中的数据却是旧的。<strong>另外一种常见的不规范的操作是先更新 BD，再更新缓存</strong>。</p>
-<img src="https://gitee.com/0909/blog/raw/master/img/updateCacheInvalid.png" alt="错误更新缓存" style="zoom:80%;" />
+<p>​        <strong>方案优点、缺点、合适业务场景</strong>：业务Token方案整体实现简单，但实际为防重策略，Token过期时间要根据业务情况去确定。对于新增数据的业务场景比较适合，比如用户在支付订单前，在进入支付订单页面时交易系统可以先根据用户与订单的信息从支付系统获取业务Token，然后在支付时再将支付信息、订单信息、业务Token一起传给支付系统，支付系统再去校验业务Token，存在则调用支付渠道执行支付逻辑，不存在直接返回支付失败。</p>
+<h5 id="2-2-乐观锁-状态机或版本号"><a href="#2-2-乐观锁-状态机或版本号" class="headerlink" title="2.2 乐观锁 + 状态机或版本号"></a>2.2 乐观锁 + 状态机或版本号</h5><p>​        乐观锁+状态机或版本号，通常的作法是在执行业务逻辑时将对应的SQL加上乐观锁，SQL的条件一般是有现在状态或版本号。</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">update</span> <span class="token keyword">order</span> <span class="token keyword">set</span> order_status <span class="token operator">=</span> ${next_status} <span class="token keyword">where</span> order_status <span class="token operator">=</span> ${current_status}<span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>有些场景也会直接通过版本号使用乐观锁。</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">update</span> post_detail <span class="token keyword">set</span> title <span class="token operator">=</span> ${title}<span class="token punctuation">,</span> content <span class="token operator">=</span> ${content}<span class="token punctuation">,</span> version <span class="token operator">=</span> ${current_version} <span class="token operator">+</span> <span class="token number">1</span> <span class="token keyword">where</span> version <span class="token operator">=</span> ${current_version}<span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>​        <strong>方案优点、缺点、合适业务场景</strong>：实现简单，不依赖外部系统，效率高，但不适合新增数据的业务场景只适合数据更新场景。这种方式不仅适合处理并发请求量很大的场景同时，同时适时一些请求量很小的场景。比如一些运营后台。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/version.png" style="zoom:80%;" />
 
-<p>​ 时间轴的顺是 T1、T2、T3、T4、T5，执行的业务逻辑分别是进程 A 更新 DB 数据 V 为 1、进程 B 更新 DB 数据 V 为 2、进程 B 更新缓存数据 V 为 2、进程 A 更新缓存数据 V 为 1、进程 C 读取缓存数据 V 为 1。可以看到 DB 中数据 V 对应的实际为 2，而缓存中存储的值为进程 A 更新的值 1，最终导致进程 C 读取到的缓存数据 V 的值为 1，该值与数据库中 V 的真实值不一致。</p>
-<p>​ 为了提高数据的最终一致性，业界提出了很多缓存更新的模式，如 Read/Write Through、Write Behind Caching 、 Cache Aside 等。</p>
-<h5 id="4-1-Read-Write-Through"><a href="#4-1-Read-Write-Through" class="headerlink" title="4.1 Read/Write Through"></a>4.1 Read/Write Through</h5><p>​ Read/Write Through 简单的来讲就是通过读写来去更新缓存，而真实数据源层对业务操作来说是透明的，这样种模式的个显著特点就是业务代码与缓存、真实数据源之间的耦合度低，代码简洁。但缓存层要单独去实现与维护。</p>
-<p>​ Read Through 业务层直接从缓存中读取数据，不关心缓存中数据获取的逻辑。</p>
-<img src="https://gitee.com/0909/blog/raw/master/img/Cache-Read-through.png" alt="Cache-Read-through" style="zoom:80%;" />
+<p>​        多运营人员同时操作一内容导致，最后运营人员A以为最终内容是title为t2，content为c1，运营人员B以为最终内容是title为t1，content为c2。而实际数据库中的数据为运营人员A与运营人员B操作的之和，<strong>还有一种可能是运营人员B直接把运营人员A的操作内容给覆盖了</strong>，再运营人员B与A完全不知情时。这种场景更好的处理方式是通过乐观锁+版本号。直接让后继的操作运营人员感知，之前的内容以被修改。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/fail_with_version.png" style="zoom:80%;" />
 
-<p>​ Write Through 写缓存与真实数据源在同一个事务中执行，要么同时成功要么同时失败。这样一定程度上增加了请求处理的时间，但保证了缓存与真实数据源中数据的一致性。</p>
-<img src="https://gitee.com/0909/blog/raw/master/img/Cache-Write-through.png" alt="Cache-Write-through" style="zoom:80%;" />
 
-<h5 id="4-2-Write-Behind-Caching"><a href="#4-2-Write-Behind-Caching" class="headerlink" title="4.2 Write Behind Caching"></a>4.2 Write Behind Caching</h5><p>​ Write Behind Caching 是指先写缓存，然后再按一定的策略去更新真实数据源。可以同步刷新、也可以是异步刷新。对于一些大批量写的业务场景，该模式能极大<strong>提高系统处理能力、降低系统的延时性</strong>。该模式的缺点是<strong>可能导致缓存中的数据与真实数据源中的数据不一致</strong>。Write Behind Caching 内部可以将这些批量操作在缓存中做一定的聚合，然后再按某种策略写到真实的数据源中。这种模式 Write Behind Caching 与 Write Through 共同点是缓存层与真实数据源之间的交互对应业务层面来说都是透明的。与 Write Through 对比能发现该模式适合<strong>处理大批量的写操作，同时允许存在一定的数据不一致性的业务场景</strong>，比如非关键业务的日志处理。</p>
-<h5 id="4-3-Cache-Aside"><a href="#4-3-Cache-Aside" class="headerlink" title="4.3 Cache Aside"></a>4.3 Cache Aside</h5><p>​ 该模式简单同时实现成本低，而且能较好的保证数据一致性。其获取数据整体流程可以分为以下几步：</p>
-<p>1、业务层请求获取某个 key 对应的数据。</p>
-<p>2、业务层检查缓存中是否存在请求 key 对应的值。如果缓存存在（缓存命中），从缓存中拿出对应值，如果缓存不存在先再从实际数据源（数据库）中获取对应的数据，在将数据写入缓存中。</p>
-<p>3、业务层返回 key 对应的值。</p>
-<img src="https://gitee.com/0909/blog/raw/master/img/cache-aside.png" alt="cache-aside" style="zoom:80%;" />
 
-<p>其更新流程总体可分为以下步骤：</p>
-<p>1、业务层更新数据源（数据库）对应的数据。</p>
-<p>2、如果更新数据源（数据库）中的数据成功，设置缓存层数据失效。</p>
-<p>注意<strong>第二步骤中如果更新数据源（数据库）中的数据成功，接着是要让缓存层数据失效，而不是去更新缓存中的数据</strong>。前面已分析了先更新数据源（数据库）再更新缓存可能导致的数据不一致问题。<strong>那么是不是遵循 Cache Aside 的模式处理数据就不会存在数据不一致性的问题呢？</strong>实际上还是有数据还是有可能存在不一致只是这种情况的概率很小。</p>
-<img src="https://gitee.com/0909/blog/raw/master/img/cache-aside-fail.png" style="zoom:80%;" />
+<h5 id="2-3-悲观锁"><a href="#2-3-悲观锁" class="headerlink" title="2.3 悲观锁"></a>2.3 悲观锁</h5><p>​        悲观锁实现分为单进程与多进程。单进程要么是在应用层加锁要么是在BD层面加锁。应用层加锁Java语言中可以通过synchronize关键字或是并发包下面的Lock子类实现。BD层面加锁可以采用select for update实现，但要避免锁表的情况。多进程场景的话要通过分布式锁来实现，主流的实现思路有Redis,  Zookeeper。Redis实现上可以直接使用Redisson实现的RedLock。Zookeeper可以通过其watch机制实现分布式锁。</p>
+<p>​        <strong>方案优点、缺点、合适业务场景</strong>：悲观锁应该是在没有其他合适方案时才会采取的兜底方案。悲观锁会降低系统整体的并发量。采用select for update 能保证BD层面数据的一致性，但存在锁表的风险。                    </p>
+<h5 id="2-4-去重表-唯一索引"><a href="#2-4-去重表-唯一索引" class="headerlink" title="2.4 去重表(唯一索引)"></a>2.4 去重表(唯一索引)</h5><p>​        去重表的实现思路是请求自身带唯一的ID，或是根据请求参数与时间等特性生成唯一的ID，下游服务在处理请求时，先将唯一ID插入去重表中(唯一ID是去重表的唯一索引)，成功则执行业务逻辑，DB层面抛出DuplicateKeyException时则直接返回失败或是检索历史处理结果返回。去重表（唯一索引）非常<strong>适合处理MQ消费消息场景时的幂等性问题。通常MQ都不会保证消息投递的唯一性，下游在消费消息时一定要根据业务场景的不同考虑是否要保证消费消息的幂等性</strong>。</p>
+<h4 id="3-业务场景分析"><a href="#3-业务场景分析" class="headerlink" title="3 业务场景分析"></a>3 业务场景分析</h4><p>​        实际的业务场景中通常会结合多种方式来保证业务操作的幂等性。下面简要的介绍一下支付业务场景、MQ消费消息场景幂等实现方式并给出部分的伪代码。</p>
+<h5 id="3-1-支付业务场景"><a href="#3-1-支付业务场景" class="headerlink" title="3.1 支付业务场景"></a>3.1 支付业务场景</h5><p><img src="https://gitee.com/0909/blog/raw/master/img/%E6%94%AF%E4%BB%98%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86.png" alt="支付流程"></p>
+<p>​        上面是用户支付订单场景时业务系统、支付中心、支付通道之间整体交互的时序图（同业务应用APP与业务服系统交互部分统一划到业务系统/应用，同支付通道与支付通道APP交互部分统一划到支付通道）。 整个流程可分为三大步 <strong>一、用户发起订单支付进入收银台 ，二、用户选定支付产品，确认支付 ，三、应用通过SDK调用支付通道，展示支付结果。</strong>这三大步中业务系统与支付中心交互的接口共有三个分别是<strong>统一下单接口（createPayOrder 1.2步）、支付接口（pay 2.3步）、支付结果查询接口（queryPayResult 3.3 步）</strong>。在整体流程中业务系统与支付中心比较重要的数据模型有<strong>业务订单（业务系统）、支付订单（支付中心）、支付流水单（支付中心），比较重要的状态有业务订单支付状态、支付订单支付状态、支付流水支付状态。业务订单支付状态：待支付、支付中、支付成功、支付失败，支付订单支付状态：待支付、支付中、支付成功、支付失败，支付流水支付状态：待支付、支付中、支付成功、支付失败。</strong></p>
+<p><strong>一、统一下单接口（createPayOrder）幂等</strong></p>
+<p>​       用户从业务APP订单页面，点击去支付会进入收银台页面。<strong>在实现每次进入收银台页面前或是重新切换到收银台页面，业务APP实际会先根据业务订单号调用支付结果查询接口，如果已支付成功则提示不能重复支付，后跳会之前的页面。</strong> 支付中心的统一下单接口（createPayOrder）会根据业务标识与业务订单号去创建支付订单并返回支付单号。实际上业务系统在获取收银支付产品列表时支付系统内会调统一下单接口（createPayOrder）。如果在这个过程中发面支付中心已存在对应订单号的支付订单且支付状态为支付成功，则不会返回支付产品列表，而且提示该订单已支付成功。<strong>统一下单接口（createPayOrder）通过支付订单表中业务标识与业务订单组成的唯一锁引防重与处理幂等。</strong></p>
+<img src="https://gitee.com/0909/blog/raw/master/img/支付统一下单幂等.png" style="zoom:80%;" />
 
-<p>时间轴的顺是 T1、T2、T3、T4、T5、T6，执行的业务逻辑分别是进程 A 获取缓存数据 V 不存在、进程 A 获取 DB 中数据 V 为 1、进程 B 更新 DB 数据 V 为 2、进程 B 设置数据 V 缓存失效、进程 A 设置缓存数据 V 为 1、进程 C 读取缓存数据 V 为 1。可以看到 DB 中数据 V 对应的实际为 2，而缓存中存储的值为进程 A 更新的值 1，最终导致进程 C 读取到的缓存数据 V 的值为 1，该值与数据库中 V 的真实值不一致。但这种情况的概率很小，理论上进程 B 在执行更新 DB 数据 V 为 2 与进程 B 设置数据 V 缓存失效两步（操作 DB 与操作缓存）所要花费的时间运大于进程 A 设置缓存数据 V 为 1（操作缓存）时间。</p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>​ 本文总结了缓存常见风险(缓存穿透、缓存击穿、缓存雪崩、缓存污染)与应对方法。跟这个话题相关的文章应该是到处都是，而且面试也经常会被问到，但个人觉得很多东西还是要系统性地去总结一下，然后再总结的过程中去更多的思考一些自己平时忽视的关键性点。这些关键性点往往也是别人容易忽视的。在写总结性文章时不能去找出一些关键性点意义可能就没那么大了。</p>
-<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p><a target="_blank" rel="noopener" href="https://catsincode.com/caching-strategy/">Caching Strategies Overview</a></p>
-<p><a target="_blank" rel="noopener" href="http://icyfenix.cn/architect-perspective/general-architecture/diversion-system/cache-middleware.html#%E7%BC%93%E5%AD%98%E9%A3%8E%E9%99%A9">缓存风险</a></p>
-<p><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/17416.html">缓存更新的套路</a></p>
+<p><strong>二、支付接口（pay ）幂等</strong></p>
+<p>​        用户进入收银台页面后，选中某一支付产品后，点击确认支付时。业务APP实际会通过业务系统调用支付中心的支付接口(pay)。支付中心内部会根据支付单号、支付产品编码去创建支付流水，并根据支付产吕编码调用支付通道统一下单接口返回预支付标识，支付中心再根据不同的支付通道组装并加密支付参数，然后返回给业务APP，APP根据返回的支付参数通过SDK调对应支付通道的支付方法。</p>
+<p>​        </p>
+<img src="https://gitee.com/0909/blog/raw/master/img/支付接口幂等.png" style="zoom:80%;" />
+
+<p>上面整体流程上有几点要注意：</p>
+<p>​        <strong>1、为了降低用户重复支付的概率，支付中心应该对支付订单进行锁单，业务系统第一次调pay支付接口后用支付中心会用支付单号对支付订单进行锁单，同时会设置一个较短的释放时间如2s，当用户频繁操作时如果支付订单处理锁单状态直接提示用户操作过于频繁请误重复支付。</strong></p>
+<p>​        <strong>2、在创建支付流水前要检查支付流水记录中否存在同一支付单号的其他支付中的支付流水，如果存在要支付中心应主动调用对应支付通道支付结果查询接口进行处理。如果支付通道侧返回支付成功，则提用户请误重复支付。</strong></p>
+<p>​        <strong>3、按上面的流程处理还是可以出现重复支付的情况，在支付单未被锁单或之前的锁单已释放后，可能出现用户多次支付的情况。当同一支付单号有多笔支付状态为支付成功的支付流水时，应做相应的原路退款处理。</strong></p>
+<p>​        <strong>4、在用户支付的过程中，如果业务订单刚好超时自动关闭，最终导致业务系统无法正常处理支付中心支付成功的消息，对这种特殊情况一定要做好处理。</strong></p>
+<p>**三、支付结果查询接口（queryPayResult ）幂等 **</p>
+<p>​        支付结果查询接口，主要用于业务则APP在SDK调用支付通道支付接口后，并同步收到支付结果，后进行主动查询当前业务订单是否支付成，并展示对应的支付结果给用户。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/支付结果查询接口幂等.png" style="zoom:80%;" />
+
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>​        本文简要地总结了常见的处理幂等手段与其适用的场景，这些处理手段的本质共性可归纳为<strong>让请求串行或唯一化，某一时间只处一请求</strong>。<strong>悲欢锁实际是在让请求串行化，业务Token、乐观锁 + 状态机或版本号、去重表(唯一索引)实际是在让请求唯一化</strong>。</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p><a target="_blank" rel="noopener" href="https://it.deepinmind.com/distributed/2019/06/30/avoiding-double-payments-in-a-distributed-payments-system.html">Avoiding Double Payments in a Distributed Payments System</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.codenong.com/js93dfce882bf5/">Airbnb支付系统如何在分布式环境下避免重复打款</a></p>
+<p><a target="_blank" rel="noopener" href="https://tech.meituan.com/2016/09/29/distributed-system-mutually-exclusive-idempotence-cerberus-gtis.html">分布式系统互斥性与幂等性问题的分析与解决</a></p>
+<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/9Z-N3cfWu7oMVJsTDkbb-Q">基于有限状态机与消息队列的三方支付系统补单实践</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/2c8cf162cf62">第三方支付微服务幂等设计</a></p>
 
                 
             </div>
@@ -557,7 +529,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://yeweigen.cn/2021/09/06/huan-cun-chang-jian-feng-xian-huan-cun-chuan-tou-huan-cun-ji-chuan-huan-cun-xue-beng-huan-cun-wu-ran-yu-ying-dui-fang-fa/">https://yeweigen.cn/2021/09/06/huan-cun-chang-jian-feng-xian-huan-cun-chuan-tou-huan-cun-ji-chuan-huan-cun-xue-beng-huan-cun-wu-ran-yu-ying-dui-fang-fa/</a>
+                    <a href="https://yeweigen.cn/2021/10/01/fen-bu-shi-xi-tong-xia-mian-ye-wu-cao-zuo-mi-deng-de-bi-yao-xing/">https://yeweigen.cn/2021/10/01/fen-bu-shi-xi-tong-xia-mian-ye-wu-cao-zuo-mi-deng-de-bi-yao-xing/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -595,12 +567,12 @@
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/%E7%BC%93%E5%AD%98/">
-                                    <span class="chip bg-color">缓存</span>
+                                <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                                    <span class="chip bg-color">分布式</span>
                                 </a>
                             
-                                <a href="/tags/redis/">
-                                    <span class="chip bg-color">redis</span>
+                                <a href="/tags/%E5%B9%82%E7%AD%89/">
+                                    <span class="chip bg-color">幂等</span>
                                 </a>
                             
                         </div>
@@ -1033,9 +1005,10 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/2021/10/01/fen-bu-shi-xi-tong-xia-mian-ye-wu-cao-zuo-mi-deng-de-bi-yao-xing/">
                     <div class="card-image">
@@ -1053,9 +1026,9 @@
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2021-10-01
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-10-01
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1068,6 +1041,7 @@
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -1087,7 +1061,7 @@
         
         <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge right-badge text-color">
-                本篇&nbsp;<i class="far fa-dot-circle"></i>
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
                 <a href="/2021/09/06/huan-cun-chang-jian-feng-xian-huan-cun-chuan-tou-huan-cun-ji-chuan-huan-cun-xue-beng-huan-cun-wu-ran-yu-ying-dui-fang-fa/">
@@ -1121,7 +1095,6 @@
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
