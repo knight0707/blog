@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="一文详解mysql MVCC的今世前身, 叶易,叶卫根,架构,架构设计,业务架构,java,JVM,源码分析,netty,Spring,MQ,Kafka,redis,RocketMQ,分布式事务">
+    <meta name="keywords" content="一文详解mysql InnoDB存储引擎中的锁, 叶易,叶卫根,架构,架构设计,业务架构,java,JVM,源码分析,netty,Spring,MQ,Kafka,redis,RocketMQ,分布式事务">
     <meta name="description" content="叶易的博客">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>一文详解mysql MVCC的今世前身 | 叶易的博客</title>
+    <title>一文详解mysql InnoDB存储引擎中的锁 | 叶易的博客</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -272,7 +272,7 @@
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">一文详解mysql MVCC的今世前身</h1>
+                    <h1 class="description center-align post-title">一文详解mysql InnoDB存储引擎中的锁</h1>
                 </div>
             </div>
         </div>
@@ -392,8 +392,12 @@
                                 <span class="chip bg-color">mysql</span>
                             </a>
                         
-                            <a href="/tags/MVCC/">
-                                <span class="chip bg-color">MVCC</span>
+                            <a href="/tags/InnoDB/">
+                                <span class="chip bg-color">InnoDB</span>
+                            </a>
+                        
+                            <a href="/tags/%E9%94%81/">
+                                <span class="chip bg-color">锁</span>
                             </a>
                         
                     </div>
@@ -417,7 +421,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2021-10-12
+                    2021-10-13
                 </div>
                 
 
@@ -426,14 +430,14 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    1.2k
+                    3.3k
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                    4 分
+                    12 分
                 </div>
                 
 
@@ -453,47 +457,123 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h3 id="一文详解mysql-MVCC的今世前身"><a href="#一文详解mysql-MVCC的今世前身" class="headerlink" title="一文详解mysql MVCC的今世前身"></a>一文详解mysql MVCC的今世前身</h3><h4 id="1-为什么需求MVCC"><a href="#1-为什么需求MVCC" class="headerlink" title="1 为什么需求MVCC"></a>1 为什么需求MVCC</h4><p>​        MVCC全称为<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Multiversion_concurrency_control">Multi-Version Concurrency Control</a>（多版本并发控制），是一种数据库并发访问无锁的优化方案。其无锁优化是针对于读取时不需要加锁，其基本思路是数据库的任何修改都不会直接覆盖原来的数据，而是生成新的副本，并通过链表将新老版本副本串连，每个副本中都会包含修改数据记录的版本号，读取数据时根据版本号的对比确定链表上哪个版本的数据对当前事务可见。在该技术出现前，只有读-读之间可以并发，引入多版本控制之后，读-读、读-写、写-读都可以并发，实现读无需加锁、读写不冲突，极大提高了数据库系统的并发性。</p>
-<p>​        在mysql InnoDB中，只有<strong>READ COMMITE</strong> 和 <strong>REPEATABLE READ</strong> 二个隔离级别下面，MVCC才会工作。READ UNCOMMITED 总读取最新版本的数据不需求MVCC进行多版本并发的控制，而SERIALIZABLE会对所有读取操作加锁，同样不需求MVCC。mysql InnoDB 存储引擎中 MVCC 机制简单的来说是通过<strong>隐式列 + undo log + read view</strong> 实现的。</p>
-<h4 id="2-隐式列、undo-log-、-read-view、快照读和当前读"><a href="#2-隐式列、undo-log-、-read-view、快照读和当前读" class="headerlink" title="2 隐式列、undo log 、 read view、快照读和当前读"></a>2 隐式列、undo log 、 read view、快照读和当前读</h4><h5 id="2-1-隐式列"><a href="#2-1-隐式列" class="headerlink" title="2.1 隐式列"></a>2.1 隐式列</h5><p>​        InnoDB 会为第一行数据加三列，分别是<strong>DB_TRX_ID、DB_ROLL_PTR、DB_ROW_ID</strong>（ <a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/5.7/en/innodb-multi-versioning.html">InnoDB Multi-Versioning</a>）。</p>
+                <h3 id="一文详解mysql-InnoDB存储引擎中的锁"><a href="#一文详解mysql-InnoDB存储引擎中的锁" class="headerlink" title="一文详解mysql InnoDB存储引擎中的锁"></a>一文详解mysql InnoDB存储引擎中的锁</h3><h4 id="1-InnoDB-存储引擎锁分类"><a href="#1-InnoDB-存储引擎锁分类" class="headerlink" title="1 InnoDB 存储引擎锁分类"></a>1 InnoDB 存储引擎锁分类</h4><p>​        mysql官网上介绍了InnoDB中7种所 **<code>Shared and Exclusive Locks</code><strong>（共享与排他锁）、</strong><code>Intention Locks</code><strong>（意向锁）、</strong><code>Record Locks</code><strong>（记录锁）、</strong><code>Gap Locks</code><strong>（间隙锁）、</strong><code>Next-Key Locks</code><strong>（临键锁） 、</strong><code>Insert Intention Locks</code><strong>（插入意向锁）、</strong><code>AUTO-INC Locks</code> **（自增锁），这7种配合MVCC机制，使得mysql在高并发的读写业务场景上有较好的表现。</p>
+<p>​        mysql InnoDB 支持不同粒度的锁，如表锁与行锁，同时支持表锁与行锁的共存。为更高效地支持不同粒度的锁，而引入<strong>Intention Locks</strong>（意向锁）。<strong>Shared and Exclusive Locks</strong>（共享与排他锁）主要是为了提高加行锁时读写的并发性。<strong>Record Locks</strong>（记录锁）用于控制带索引记录的操作性能。<strong>Gap Locks</strong>（间隙锁）+ <strong>Next-Key Locks</strong>（临键锁）避免<strong>Repeatable Read</strong>级别下面出现幻读。<strong>Intention Locks</strong>（插入意向锁）保证多个事务，在同一个索引，同一个范围区间插入记录时，如果插入的位置不冲突，不会阻塞彼此。<strong>AUTO-INC Locks</strong> （自增锁）保证同一事务中利用数据库自增ID插入数据时ID的连续性。</p>
+<h4 id="2-Shared-and-Exclusive-Locks（共享与排他锁）"><a href="#2-Shared-and-Exclusive-Locks（共享与排他锁）" class="headerlink" title="2 Shared and Exclusive Locks（共享与排他锁）"></a>2 Shared and Exclusive Locks（共享与排他锁）</h4><p>​        InnoDB内实现了标准的行锁，其中包括两类锁<strong>Shared Locks (共享锁 S)</strong> 与 <strong>Exclusive Locks （排他锁 X）</strong>。</p>
 <ul>
-<li><p><strong>DB_TRX_ID 代表最近更新或新增该行数据事务的事务标识，也可叫事务ID(删除操作也被看作一种特殊的更新)</strong></p>
-</li>
-<li><p><strong>DB_ROLL_PTR 表示回滚指针，其指向当前记录上一次更新或新增操作对应的undo log，undo log 能还原数据到之前的状态</strong></p>
-</li>
-<li><p>**DB_ROW_ID 在无聚簇索引时 innodb内部自动创建的自增id  **</p>
-<img src="https://gitee.com/0909/blog/raw/master/img/隐式列.png" style="zoom:80%;" /></li>
+<li><strong>Shared Locks (共享锁 S) 允许获取锁的事务读取数据。</strong></li>
+<li><strong>Exclusive Locks （排他锁 X）允许获取锁的事务修改、删除数据。</strong></li>
 </ul>
-<h5 id="2-2-undo-log"><a href="#2-2-undo-log" class="headerlink" title="2.2 undo log"></a>2.2 undo log</h5><p>​        undo log 主要有两大用途一是实现InnoDB中事务的原子性，保障已部分落盘的数据可以被回滚，另外其用于实现MVCC机制中多版本数据的变向存储。undo log 是逻辑日志，其记录了上一次操作的逆向操作。</p>
-<img src="https://gitee.com/0909/blog/raw/master/img/20211012145919.png" style="zoom:80%;" />
+<h5 id="2-1-共享锁-S-与-排他锁-X兼容互斥性"><a href="#2-1-共享锁-S-与-排他锁-X兼容互斥性" class="headerlink" title="2.1 共享锁 S 与 排他锁 X兼容互斥性"></a>2.1 共享锁 S 与 排他锁 X兼容互斥性</h5><pre><code>     如果事务A获取数据行Data上的共享锁 S，其他事务也可以获取数据行Data上的共享锁 S。如果事务A获取数据行Data上的排他锁 X，则其他事务不能获取数据行Data上的排他锁 X，同样也不能获取数据行Data上的共享锁 S，必须待到事务A**释放**数据行Data上的排他锁 X。共享锁 S与排他锁 X之间的兼容互斥性如下图。
+</code></pre>
+<img src="https://gitee.com/0909/blog/raw/master/img/SX锁兼容性.png" style="zoom:80%;" />
 
-<h5 id="2-3-read-view"><a href="#2-3-read-view" class="headerlink" title="2.3 read view"></a>2.3 read view</h5><p>​        <a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/5.7/en/glossary.html#glos_read_view">read veiw</a> 是InnoDB在进行快照读时产生时产生的<strong>读视图</strong>（后面介绍快照读，也叫一致性读 <strong>consistent read</strong> ）。当执行快照读时，系统会为其创建一个read view,  并通过最新数据与undo log链上数据中的DB_TRX_ID 与read view 进行比较，来决定<strong>当前事务</strong>（<strong>创建read view对应的事务</strong>）能够看到undo log上哪个版本的数据。</p>
-<h5 id="2-4-快照读和当前读"><a href="#2-4-快照读和当前读" class="headerlink" title="2.4 快照读和当前读"></a>2.4 快照读和当前读</h5><p>​        <strong>快照读</strong></p>
-<p>​        简单的select 语句（不包含 select … lock in share model, select … for update）都快照读。mysql官网的叫<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/5.7/en/innodb-consistent-read.html">consistent read</a>，因为一致性读是基于快照的，通常会叫快照读，这类读不用加读锁，而是通过**隐式列 +  undo log + read view **来获取所要的数据。快照读实际就是InnoDB中MVCC机制的实现。</p>
-<p>​        <strong>当前读</strong></p>
-<p>​        所有的需要加锁的涉及读取的操作（可以参考mysql官网中的<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/5.7/en/innodb-locking-reads.html">innodb locking reads</a> ）如</p>
-<ul>
-<li>select … lock in share model</li>
-<li>select … for update</li>
-<li>update …</li>
-<li>insert …</li>
-<li>delect …</li>
-</ul>
-<h4 id="3-Innodb-MVCC-快照读处理流程"><a href="#3-Innodb-MVCC-快照读处理流程" class="headerlink" title="3 Innodb MVCC 快照读处理流程"></a>3 Innodb MVCC 快照读处理流程</h4><p>​        通过前面简单的介绍已了解到快照读实际就是InnoDB中MVCC机制的实现。现在来看一下MVCC快照读的整体处理流程。快照读时数据可见的判断依赖于ReadView 这个数据结构，其包含关键属性如下。</p>
-<ul>
-<li><strong><code>m_ids</code></strong> 当前快照被创建时，活跃（已启动但未提交）的事务集合。</li>
-<li><strong><code>m_low_limit_id</code></strong> 高水位，当前系统中的事务的最大ID值加一，即下一个开启的事务的ID。</li>
-<li><strong><code>m_up_limit_id</code></strong>  低水位，当前活跃事务的最小ID，小于该ID的事务都是已经提交的事务。</li>
-<li><strong><code>m_creator_trx_id</code></strong> 创建该read view的事务ID。</li>
-</ul>
-<img src="https://gitee.com/0909/blog/raw/master/img/事务ReadView1.png" style="zoom:80%;" />
+<h5 id="2-2-共享锁-S-与-排他锁-X兼容互斥性示例"><a href="#2-2-共享锁-S-与-排他锁-X兼容互斥性示例" class="headerlink" title="2.2 共享锁 S 与 排他锁 X兼容互斥性示例"></a>2.2 共享锁 S 与 排他锁 X兼容互斥性示例</h5><p>​        下面看一下在user表上，共享锁 S 与 排他锁 X兼容互斥性示例。user表中user_id 为<strong>primary key</strong>。</p>
+<p><strong>一、Session1加共享锁S</strong></p>
+<p>​        在Session1中 执行 select * from user where user_id = 1 lock in share mode 语句，此时user_id = 1 的行上加了<strong>共享锁 S</strong>。由于user_id的行上没有其他锁，查询结果如下。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/20211014100110.png" style="zoom:80%;" />
 
-<p>​        InnoDB在处理快照读（consistent read 一致性读时），只要拿出数据中的DB_TRX_ID（隐式列中最近更新或新增该行数据事务的事务标识，事务ID）然后与ReadView中的m_ids、m_low_limit_id、m_up_limit_id、m_creator_trx_id进行比较，就可确定当前版本的数据对ReadView读视图是否可见。处理算法大体流程如下：</p>
-<p><strong>1、DB_TRX_ID ≥ m_low_limit_id （高水位）， DB_TRX_ID 对应数据对当前事务不可见，表示这个数据是由将来的事务更新的。</strong></p>
-<p><strong>2、DB_TRX_ID &lt; m_up_limit_id （低水位） ，DB_TRX_ID 对应数据对当前事务可见，表示这个数据是由已经提交的事务更新的。</strong></p>
-<p><strong>3、DB_TRX_ID 介于高水位与低水位之间，如果DB_TRX_ID在m_ids（活跃事务集合）中，表示尚未提交的事务， DB_TRX_ID 对应数据对当前事务不可见;  如果DB_TRX_ID不在m_ids（活跃事务集合）中，表示事务已经提交了， DB_TRX_ID 对应数据对当前事务可见。</strong></p>
-<h4 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h4><p><a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/5.7/en/innodb-storage-engine.html">The InnoDB Storage Engine</a></p>
-<p><a target="_blank" rel="noopener" href="https://github.com/mysql/mysql-server/blob/5.7/storage/innobase/include/read0types.h">mysql5.7 ReadView 源码</a></p>
+<p><strong>二、Session2再加共享锁s（可再次读取数据）</strong></p>
+<p>​        在Session2中 执行 select * from user where user_id = 1 lock in share mode 语句，此时上面的Session1已加共享锁，由于<strong>共享锁S之间兼容</strong>可再次在user_id = 1 的行上加<strong>共享锁 S</strong>。Session2查询结果如下。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/20211014100017.png" style="zoom:80%;" />
+
+<p><strong>三、Session3再加排他锁X（出现锁等待超时）</strong></p>
+<p>​        在Session3中 执行 select * from user where user_id = 1 for upate 语句，此时user_id = 1 的行已被上次两个Session加<strong>共享锁 S</strong>。由于<strong>共享锁S与之排他锁X之间互斥</strong>，Session3要等待user_id = 1 的行上<strong>共享锁 S</strong>  释放才能获取结果，否则出现<strong>锁等待超时</strong>，查询结果如下。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/20211014100211.png" style="zoom:80%;" />
+
+<p>​        共享锁 S 与 排他锁 X兼容互斥性其他情况不一一分析了。</p>
+<h4 id="3-Intention-Locks（意向锁）"><a href="#3-Intention-Locks（意向锁）" class="headerlink" title="3 Intention Locks（意向锁）"></a>3 Intention Locks（意向锁）</h4><p>​        意向锁，表示未来的某个时刻，事务可能要加共享/排它锁了，先提前声明一个意向。InnoDB 支持**<code>多粒度锁（multiple granularity locking）</code><strong>，他允许</strong><code>行级锁</code><strong>与</strong><code>表级锁</code><strong>共存，为更高效地支持不同粒度的锁，而引入</strong>Intention Locks（意向锁）<strong>，而实际是一种</strong><code>表锁</code><strong>。Intention Locks（意向锁）分为</strong>意向共享锁（intention shared lock, IS）** 与<strong>意向排他锁（intention exclusive lock, IX）</strong>两种。</p>
+<ul>
+<li><p><strong>意向共享锁</strong>（intention shared lock, IS）：事务有意向对表中的某些行加<strong>共享锁</strong>（S锁）</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token comment" spellcheck="true">-- 事务要获取某些行的 S 锁，必须先获得表的 IS 锁。</span>
+<span class="token keyword">SELECT</span> <span class="token keyword">column</span> <span class="token keyword">FROM</span> <span class="token keyword">table</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token keyword">LOCK</span> <span class="token operator">IN</span> <span class="token keyword">SHARE MODE</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+</li>
+<li><p><strong>意向排他锁</strong>（intention exclusive lock, IX）：事务有意向对表中的某些行加<strong>排他锁</strong>（X锁）</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token comment" spellcheck="true">-- 事务要获取某些行的 X 锁，必须先获得表的 IX 锁。</span>
+<span class="token keyword">SELECT</span> <span class="token keyword">column</span> <span class="token keyword">FROM</span> <span class="token keyword">table</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token keyword">FOR</span> <span class="token keyword">UPDATE</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+</li>
+</ul>
+<p>意向锁是一种比较弱的锁，他们之间相互兼容</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/IS与IX兼容性.png" style="zoom:80%;" />
+
+<p><strong>注意：</strong> 意向锁是一种与<em>行锁不冲突</em> 的表锁，意向锁是用来提高表级加锁判断效率的，看完下面<strong>意向锁解决的问题</strong>便会明白。重要的事重复三遍</p>
+<p><strong>意向锁不会与行级的共享 / 排他锁互斥</strong></p>
+<p><strong>意向锁不会与行级的共享 / 排他锁互斥</strong></p>
+<p><strong>意向锁不会与行级的共享 / 排他锁互斥</strong></p>
+<h5 id="3-1-意向锁解决的问题"><a href="#3-1-意向锁解决的问题" class="headerlink" title="3.1 意向锁解决的问题"></a>3.1 意向锁解决的问题</h5><p>​        来看看如果没有意向锁时，一个事务想向表加表锁的整体处理流程。假设事务想向表加共享锁比如执行如下操作，</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">LOCK</span> <span class="token keyword">TABLES</span> <span class="token keyword">user</span> <span class="token keyword">READ</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>由于共享锁S与排他锁X互斥，所以当前事务试图为表加共享锁时，必须保证：</p>
+<ul>
+<li>当前没有其他事务持有user表的排他锁。</li>
+<li>当前没有其他事务持有user表中任意一行的排他锁。</li>
+</ul>
+<p>所以当前事务在试图对表加共享锁前，会去检测上面的两个条件是否满足，即要检测user表每一行是否加了排他锁，没有意向锁时只能一行一行的检测，这种作法必然效率低下。<strong>意向锁是如何解决这种检测效率低下的问题的呢？</strong></p>
+<p>​        上面已说到过事务要获取某些行的 S 锁，必须先获得表的 IS 锁，事务要获取某些行的 X 锁，必须先获得表的 IX 锁。同样事务想对表加共享锁，必须先获得表的 IS 锁，事务想对表加排他锁，必须先获得表的 IX 锁。这样事务试图对表加共享锁时，只要检测表上有没有已加 IX 锁就行，而不用一行行去检测表中所有记录存没存在加行排他锁（只要表中某一行要加行排他锁，必然要先加IX 锁），如果表上已加IX锁，事务试图对表加共享锁的事务将被阻塞。</p>
+<h5 id="3-2-S锁-X锁-IS锁-IX锁之间的兼容互斥性"><a href="#3-2-S锁-X锁-IS锁-IX锁之间的兼容互斥性" class="headerlink" title="3.2 S锁 X锁 IS锁 IX锁之间的兼容互斥性"></a>3.2 S锁 X锁 IS锁 IX锁之间的兼容互斥性</h5><p>​        前面已了解S锁与X锁，IS锁与 IX锁之间的兼容互斥性，现在看一下S锁 X锁 IS锁 IX锁之间的兼容互斥性。意向锁之间互相兼容。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/锁兼容性.png" style="zoom:80%;" />
+
+<p>注意：上面所说的S锁与X锁是针对于表锁，而不是行锁，意向锁只针对表，不针对行进行锁定，意向锁是用来提高表级加锁判断效率的，其不会影响多个事务并发对不同的行数据加行排他锁。重要的事再重复三遍</p>
+<p><strong>意向锁不会与行级的共享 / 排他锁互斥</strong></p>
+<p><strong>意向锁不会与行级的共享 / 排他锁互斥</strong></p>
+<p><strong>意向锁不会与行级的共享 / 排他锁互斥</strong></p>
+<h5 id="3-3-示例分析"><a href="#3-3-示例分析" class="headerlink" title="3.3 示例分析"></a>3.3 示例分析</h5><p><strong>一、事务 A 先获取了<code>user</code>表 (user_id为主键)某一行的排他锁（并未提交）</strong></p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">user</span> <span class="token keyword">where</span> user_id <span class="token operator">=</span> <span class="token number">1</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>1、事务A会先获取了 <code>user</code> 表上的<strong>意向排他锁（IX）</strong>。</p>
+<p>2、事务A会先获取了 <code>user</code> 表中，user_id=1对应行上的**排他锁(X)**。</p>
+<p><strong>二、事务B尝试获取user表上的表共享锁（S）</strong></p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">lock</span> <span class="token keyword">tables</span> <span class="token keyword">use</span> <span class="token keyword">read</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>1、事务B检测事务A持有use表上的<strong>意向排他锁（IX）</strong>。</p>
+<p>2、事务B对user表加锁请求处理阻塞等待</p>
+<p><strong>三、事务C想获取user表中另一行的排他锁</strong></p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">user</span> <span class="token keyword">where</span> user_id <span class="token operator">=</span> <span class="token number">7</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>1、事务C申请获取user表上的<strong>意向排他锁（IX）</strong>。</p>
+<p>2、事务C检测到事务A已持有user表的<strong>意向排他锁（IX）</strong>。</p>
+<p>3、因为意向排他锁（IX）之间不互斥，事务C成功获取user表上的<strong>意向排他锁（IX）</strong>。</p>
+<p>4、因为user_id = 7对应行记录上没有排他锁，事务C成功user表上user_id=7的行上对应的<strong>行排它锁</strong>。</p>
+<h4 id="4-Record-Locks（记录锁"><a href="#4-Record-Locks（记录锁" class="headerlink" title="4 Record Locks（记录锁)"></a>4 Record Locks（记录锁)</h4><p>​        Record Locks（记录锁）他锁定索引对应的数据行记录。</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">user</span> <span class="token keyword">where</span> user_id <span class="token operator">=</span> <span class="token number">7</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>这个词句有保证user表上user_id = 7 的记录被锁定，在当前事务没提交前，其他事务对该记录的当前读操作会被阻塞（当前读具体介绍可见我之的文章<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/026g7KHA4ZbjsoIUf9fXNg">一文了解mysql InnDB中MVCC的今世前生</a>）。</p>
+<h4 id="5-Gap-Locks（间隙锁）"><a href="#5-Gap-Locks（间隙锁）" class="headerlink" title="5 Gap Locks（间隙锁）"></a>5 Gap Locks（间隙锁）</h4><p>​        Gap Locks（间隙锁）用于锁定某一区间范围内的记录。它封锁索引记录中的间隔，或者第一条索引记录之前的范围，又或者最后一条索引记录之后的范围。其主要用于<strong>防止其他事务在索引记录中的间隔内部插入数据，而引起的幻读</strong>。对于<strong>读已提交</strong>(Read Committed, RC) 事务隔离级别，Gap Locks会自动失效。</p>
+<h5 id="5-1-数据锁定范围分析"><a href="#5-1-数据锁定范围分析" class="headerlink" title="5.1 数据锁定范围分析"></a>5.1 数据锁定范围分析</h5><p>假设user表中<strong>user_id</strong>为<strong>主键(Primary Key)<strong>且为</strong>unsigned int</strong> 类型。</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">user</span> <span class="token keyword">where</span> user_id <span class="token operator">&lt;</span> <span class="token number">7</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>​        上面的操作锁定的记录范围为 user_id &gt;= 0 到 user_id = 6 的记录，只有事务提交后，其他事务才能操作该范围的记录。注意即使 user_id=3对应的记录不存在，事务没提交前，插入user_id=3记录也是不允许的，不然就没办法解决幻读问题。</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">user</span> <span class="token keyword">where</span> user_id <span class="token operator">></span> <span class="token number">7</span> <span class="token operator">and</span> user_id <span class="token operator">&lt;</span> <span class="token number">1000</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span class="token punctuation">;</span> 
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>​        上面的操作锁定的记录范围为 user_id &gt; 7 到 user_id &lt; 10000 的记录，只有事务提交后，其他事务才能操作该范围的记录。</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">select</span> <span class="token operator">*</span> <span class="token keyword">from</span> <span class="token keyword">user</span> <span class="token keyword">where</span> user_id <span class="token operator">></span> <span class="token number">1000</span> <span class="token keyword">for</span> <span class="token keyword">update</span><span class="token punctuation">;</span> 
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>​        上面的操作锁定的记录范围为 user_id &gt; 1000 到 int 最大值之间的记录，只有事务提交后，其他事务才能操作该范围的记录。</p>
+<h4 id="6-Next-Key-Locks（临键锁）"><a href="#6-Next-Key-Locks（临键锁）" class="headerlink" title="6 Next-Key Locks（临键锁）"></a>6 Next-Key Locks（临键锁）</h4><p>​        <strong>Next-Key Locks（临键锁）</strong>是 <strong>Recod Locks（记录锁）</strong>与<strong>Gap Locks（间隙锁）</strong>的组合，它的封锁范围，既包含索引记录，又包含索引区间。同样其主要用于<strong>防止其他事务在索引记录中的间隔内部插入数据，而引起的幻读</strong>。</p>
+<p>​        假设user表中<strong>user_id</strong>为<strong>主键(Primary Key)<strong>且为</strong>unsigned int</strong> 类型，表中已有use_id 为 3，5，6，9，1000的记录。则对user_id而言可能的Next-Key Locks（临键锁）范围有</p>
+<ul>
+<li>[0，3]</li>
+<li>（3，5]</li>
+<li>（5，9]</li>
+<li>（9，1000]</li>
+<li>（1000，int最大值]</li>
+</ul>
+<h4 id="7-Insert-Intention-Locks（插入意向锁）"><a href="#7-Insert-Intention-Locks（插入意向锁）" class="headerlink" title="7 Insert Intention Locks（插入意向锁）"></a>7 Insert Intention Locks（插入意向锁）</h4><p>​        <strong>Insert Intention Locks（插入意向锁）</strong>是间隙锁(Gap Locks)的一种，其专门针对插入操作，其能提高多个事务并发向锁区间的范围内插入不同数据的并发效率，<strong>插入意向锁提高了并发插入的效率</strong>。</p>
+<p>​        假设user表中<strong>user_id</strong>为<strong>主键(Primary Key)<strong>且为</strong>unsigned int</strong> 类型且非自增，表中已有use_id 为 7，99，1000的记录。</p>
+<p>​        事务A先执行，在user_id=7与user_id=99两条记录中插入了一行包含user_id = 9的记录，还未提交</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">insert</span> <span class="token keyword">into</span> <span class="token keyword">user</span> <span class="token keyword">values</span><span class="token punctuation">(</span><span class="token number">9</span><span class="token punctuation">,</span> xxx<span class="token punctuation">,</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>​        事务B后执行，也在user_id=7与user_id=99两条记录中插入了一行包含user_id = 97的记录，提交。</p>
+<pre class="line-numbers language-sql"><code class="language-sql"><span class="token keyword">insert</span> <span class="token keyword">into</span> <span class="token keyword">user</span> <span class="token keyword">values</span><span class="token punctuation">(</span><span class="token number">97</span><span class="token punctuation">,</span> xxx<span class="token punctuation">,</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>此事务A与事务B分别会加user_id=9与user_id=97的    <strong>Insert Intention Locks（插入意向锁）</strong>， 事务B不会被事务B给阻塞。</p>
+<h4 id="8-AUTO-INC-Locks（自增锁）"><a href="#8-AUTO-INC-Locks（自增锁）" class="headerlink" title="8 AUTO-INC Locks（自增锁）"></a>8 AUTO-INC Locks（自增锁）</h4><p>​        <strong>AUTO-INC Locks（自增锁）</strong>是一种特殊的表级别锁（table-level lock），专门针对事务插入AUTO_INCREMENT类型的列。最简单的情况，如果一个事务正在往表中插入记录，所有其他事务的插入必须等待，以便第一个事务插入的行，是连续的主键值。InnoDB 提供了 <a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_autoinc_lock_mode"><code>innodb_autoinc_lock_mode</code></a> 参数用于控制AUTO-INC Locks（自增锁）。其允许选择如何在可预测的自动增量值序列和插入操作的最大并发之间进行权衡。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>​        本文介绍了mysql InnoDB存储引擎中常见的锁，并通过部分示例对锁进行简要地分析。mysql InnoDB 支持不同粒度的锁，如表锁与行锁，同时支持表锁与行锁的共存。为更高效地支持不同粒度的锁，而引入<strong>Intention Locks</strong>（意向锁）。<strong>Shared and Exclusive Locks</strong>（共享与排他锁）主要是为了提高加行锁时读写的并发性。<strong>Record Locks</strong>（记录锁）用于控制带索引记录的操作性能。<strong>Gap Locks</strong>（间隙锁）+ <strong>Next-Key Locks</strong>（临键锁）避免<strong>Repeatable Read</strong>级别下面出现幻读。<strong>Intention Locks</strong>（插入意向锁）保证多个事务，在同一个索引，同一个范围区间插入记录时，如果插入的位置不冲突，不会阻塞彼此。<strong>AUTO-INC Locks</strong> （自增锁）保证同一事务中利用数据库自增ID插入数据时ID的连续性。</p>
+<h4 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h4><p><a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/5.7/en/innodb-locking.html#innodb-shared-exclusive-locks">InnoDB Locking</a></p>
+<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/f4_o-6-JEbIzPCH09mxHJg">这次终于懂了，InnoDB的七种锁（收藏）</a></p>
+<h4 id="题外话"><a href="#题外话" class="headerlink" title="题外话"></a>题外话</h4><p>​        原创不易，点赞、在看、转发是对我莫大的鼓励，关注公众号洞悉源码是对我最大支持。同时相信我会分享更多干货，我同你一起成长，我同你一起进步。</p>
 
                 
             </div>
@@ -520,7 +600,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://yeweigen.cn/2021/10/12/yi-wen-xiang-jie-mysql-mvcc-de-jin-shi-qian-shen/">https://yeweigen.cn/2021/10/12/yi-wen-xiang-jie-mysql-mvcc-de-jin-shi-qian-shen/</a>
+                    <a href="https://yeweigen.cn/2021/10/13/yi-wen-xiang-jie-mysql-innodb-cun-chu-yin-qing-zhong-de-suo/">https://yeweigen.cn/2021/10/13/yi-wen-xiang-jie-mysql-innodb-cun-chu-yin-qing-zhong-de-suo/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -562,8 +642,12 @@
                                     <span class="chip bg-color">mysql</span>
                                 </a>
                             
-                                <a href="/tags/MVCC/">
-                                    <span class="chip bg-color">MVCC</span>
+                                <a href="/tags/InnoDB/">
+                                    <span class="chip bg-color">InnoDB</span>
+                                </a>
+                            
+                                <a href="/tags/%E9%94%81/">
+                                    <span class="chip bg-color">锁</span>
                                 </a>
                             
                         </div>
@@ -996,9 +1080,10 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/2021/10/13/yi-wen-xiang-jie-mysql-innodb-cun-chu-yin-qing-zhong-de-suo/">
                     <div class="card-image">
@@ -1016,9 +1101,9 @@
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2021-10-13
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-10-13
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1031,6 +1116,7 @@
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -1057,13 +1143,13 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2021/10/01/fen-bu-shi-xi-tong-xia-mian-ye-wu-cao-zuo-mi-deng-de-bi-yao-xing/">
+                <a href="/2021/10/12/yi-wen-xiang-jie-mysql-mvcc-de-jin-shi-qian-shen/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="分布式系统下面业务操作幂等的必要性">
+                        <img src="/medias/featureimages/19.jpg" class="responsive-img" alt="一文详解mysql MVCC的今世前身">
                         
-                        <span class="card-title">分布式系统下面业务操作幂等的必要性</span>
+                        <span class="card-title">一文详解mysql MVCC的今世前身</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1074,14 +1160,14 @@
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2021-10-01
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-10-12
                             </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="post-category">
-                                    分布式
+                            <a href="/categories/mysql/" class="post-category">
+                                    mysql
                                 </a>
                             
                             
@@ -1091,16 +1177,12 @@
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
-                        <span class="chip bg-color">分布式</span>
+                    <a href="/tags/mysql/">
+                        <span class="chip bg-color">mysql</span>
                     </a>
                     
-                    <a href="/tags/%E5%B9%82%E7%AD%89/">
-                        <span class="chip bg-color">幂等</span>
-                    </a>
-                    
-                    <a href="/tags/%E6%94%AF%E4%BB%98/">
-                        <span class="chip bg-color">支付</span>
+                    <a href="/tags/MVCC/">
+                        <span class="chip bg-color">MVCC</span>
                     </a>
                     
                 </div>
