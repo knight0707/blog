@@ -4,7 +4,7 @@
   
     
     <entry>
-      <title>一文详解ThreadLocal内存泄漏问题原因</title>
+      <title>一文详解ThreadLocal</title>
       <link href="/2021/10/25/%E4%B8%80%E6%96%87%E8%AF%A6%E8%A7%A3ThreadLocal/"/>
       <url>/2021/10/25/%E4%B8%80%E6%96%87%E8%AF%A6%E8%A7%A3ThreadLocal/</url>
       
