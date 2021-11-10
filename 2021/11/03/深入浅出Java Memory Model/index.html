@@ -1,0 +1,1673 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="深入浅出Java内存模型, 叶易,叶卫根,架构,架构设计,业务架构,java,JVM,源码分析,netty,Spring,MQ,Kafka,redis,RocketMQ,分布式事务">
+    <meta name="description" content="叶易的博客">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>深入浅出Java内存模型 | 叶易的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 5.4.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">叶易的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/about" class="waves-effect waves-light">
+      
+      <i class="fas fa-user-circle" style="zoom: 0.6;"></i>
+      
+      <span>关于</span>
+    </a>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">叶易的博客</div>
+        <div class="logo-desc">
+            
+            叶易的博客
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/about" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-user-circle"></i>
+			
+			关于
+		</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/knight0707/" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/knight0707/" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/8.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">深入浅出Java内存模型</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        width: 345px;
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        padding: 35px 0 15px 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content {
+        padding-bottom: 30px;
+        overflow: auto;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+
+        position: absolute;
+        right: 23.5vw;
+        display: block;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/volatile/">
+                                <span class="chip bg-color">volatile</span>
+                            </a>
+                        
+                            <a href="/tags/synchronized/">
+                                <span class="chip bg-color">synchronized</span>
+                            </a>
+                        
+                            <a href="/tags/JMM/">
+                                <span class="chip bg-color">JMM</span>
+                            </a>
+                        
+                            <a href="/tags/double-check/">
+                                <span class="chip bg-color">double-check</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/java/" class="post-category">
+                                java
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2021-11-03
+                </div>
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    3.9k
+                </div>
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                    14 分
+                </div>
+                
+
+                
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="far fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h3 id="深入浅出Java内存模型"><a href="#深入浅出Java内存模型" class="headerlink" title="深入浅出Java内存模型"></a>深入浅出Java内存模型</h3><h4 id="Java-内存模型概述"><a href="#Java-内存模型概述" class="headerlink" title="Java 内存模型概述"></a>Java 内存模型概述</h4><p>​        <strong>Java 内存模型</strong>（<strong>Java Memory Model，JMM</strong>）其主要的目标是定义程序中各个变量的访问规则，即虚似机中将变量储存到内存与从内存中取出变量这样的底层细节。<strong>JMM</strong> 是一个抽象的概念，它描述了一系列的规则或者规范，用来解决多线程的共享变量访问问题。这里所说的变量，包括实例字段、静态字段，但<strong>不包括局部变量和方法参数，因为后者是线程私有的，不存在数据竞争问题，即没有线程安全问题</strong>。</p>
+<p>​        从<strong>JMM</strong>本身角度理解，可以分为二方面，一方面其抽象了<strong>主内存（Main Memory ）与工作内存（Work Memory）</strong>的概念，另一方面其定义了<strong>一组保障内存可见性与正确性的规范</strong>。<strong>JMM</strong>抽象出了<strong>主内存</strong>与<strong>工作内存</strong>的概念，<strong>主内存</strong>中存储了线程之间的共享变量，<strong>工作内存</strong>是通过对缓存、寄存器、写缓冲区等的抽象，每个线程都有一个私有的<strong>工作内存</strong>，<strong>工作内存</strong>中存储了<strong>主内存</strong>中共享变量对应的副本。线程在执行时先从<strong>主内存</strong>加载数据<strong>工作内存</strong>，然后执行逻辑后再将数据刷新回<strong>主内存</strong>，使该数据对其他线程可见。如果没有一定的规范与约束，这种模型明显存在数据一致性的问题（由于Java编译器指令重排序优化和CPU乱序执行优化的存在，使得问题变得更加复杂）。所以<strong>JMM</strong>基于内存屏障（<strong>Memory-Barrier</strong>）提供了类似<strong>as if serial</strong>与<strong>happens-before</strong>的保障，最终保障了多线程之间操作的可见性与正确性。</p>
+<p>​        而从<strong>JMM</strong>使用者的角度理解，<strong>JMM</strong>平衡了<strong>JVM</strong>工程师、编译器工程师在性能上的需求与<strong>Java</strong>程序员开发安全的简单性上的渴望。<strong>JMM在保证正确性的同时会最大限度的放宽对指令重排和乱序执行的限制</strong>。对于<strong>Java</strong>程序员，<strong>JDK</strong>提供了如<strong>volatile</strong>关键字、<strong>synchronized</strong>关键字、<strong>final</strong>关键字、<strong>Java</strong>并发类这样的顶层机制，为程序员提供简单的编程模型。</p>
+<h4 id="Java为什么需要内存模型"><a href="#Java为什么需要内存模型" class="headerlink" title="Java为什么需要内存模型"></a>Java为什么需要内存模型</h4><p>​        为了提升计算机的运行效率，编译器、内存系统通常会对指令进行重排，处理器会对指令进行乱序/并行执行，处理器与主内存之间存在高速缓存以减少CPU的等待时间。</p>
+<p><img src="https://gitee.com/0909/blog/raw/master/img/20211109113941.png"></p>
+<p>​        处理器优化其实也是重排序的一种类型，重排序可分三大类</p>
+<ul>
+<li><strong>编译器优化的重排序</strong> ， 编译器在不改变单线程程序语义放入前提下，可以重新安排语句的执行顺序。</li>
+<li><strong>指令级并行的重排序</strong> ，现代处理器采用了指令级并行技术来将多条指令重叠执行。如果不存在数据依赖性，处理器可以改变语句对应机器指令的执行顺序。</li>
+<li><strong>内存系统的重排序</strong>，由于处理器使用缓存和读写缓冲区，这使得加载和存储操作看上去可能是在乱序执行。</li>
+</ul>
+<p>​        类似上面的这些优化给并发编程带来了<strong>一致性</strong>、<strong>可见性</strong>、<strong>有序性</strong>等问题。这些问题从深层次来看与<strong>缓存一致性</strong>、<strong>处理器优化</strong>、<strong>指令重排序</strong>有关。<strong>JMM</strong>就是为了解决这些问题而提出的，其通过抽象内存模型，制定类似<strong>as if serial</strong>与<strong>happens-before</strong>的规则来屏蔽底层编译器、内存系统、处理器重排的细节，最终为<strong>Java</strong>工程师提供更加清晰、简单的编程模型。</p>
+<p>​        编译器/JVM工程师，会根据<strong>Java</strong>语言规范中对<strong>JMM</strong>的规定，去处理不同平台、不同处理器架构上的差异，通过使用类似<strong>内存屏障（Memory-Barrier）</strong>之类技术，保证执行结果符合 <strong>JMM</strong> 的推断。而<strong>Java</strong>工程师，则不用关心这些细节，通过遵守 <strong>happens-before 规则</strong>、<strong>volatile</strong>语义、<strong>synchronized</strong>语义、<strong>final</strong> 语义以及合理地使用<strong>Java</strong>并发包下的相关类，便可写出可靠的多线程应用。虽然单线程下面也会出现上面说的编译器重排，处理器乱序执行等问题，但其都遵守<strong>as-if-serial语义</strong>，即编译器与处理器怎么优化后都能保证单线程下面程序执行结果的可预测性与正确性。</p>
+<p><img src="https://gitee.com/0909/blog/raw/master/img/20211108133444.png"></p>
+<p>​        从上面可以很直观的看到，<strong>JMM</strong>的引入使得<strong>Java</strong>工程师、编译器/<strong>JVM</strong>工程师、处理器工程师之间的关注点进行有效的分层隔离，不同架构的CPU对最上层的应用程序的<strong>Java</strong>工程师而言已是透明的，<strong>Java</strong>工程师将更聚焦于业务逻辑的开发。</p>
+<h4 id="主内存与工作内存"><a href="#主内存与工作内存" class="headerlink" title="主内存与工作内存"></a>主内存与工作内存</h4><p>​        前面说到JMM抽象了<strong>主内存</strong>与<strong>工作内存</strong>，<strong>主内存</strong>中存储了线程间的共享变量，通过对缓存、寄存器、写缓冲区等的抽象每个线程都有一个私有的<strong>工作内存</strong>，<strong>工作内存</strong>中存储了主内存对应的副本。线程对变量的读写操作都发生在其自身的<strong>工作内存</strong>中，而不能直接操作<strong>主内存</strong>中的变量。线程不能直接读写其他线程私有<strong>工作内存</strong>中的数据，线程间的变量传必须通过<strong>主内存</strong>完成。<strong>JMM</strong>规定了线程应该何时从<strong>主内存</strong>中加载数据到<strong>工作内存</strong>，何时又该将<strong>工作内存</strong>中的副本数据刷新到<strong>主内存</strong>，使数据对其他线程可见。这种可见性机制在<strong>JMM</strong>中是通过<strong>happens-before规则</strong>定义的，而具体<strong>JVM</strong>实现上则是通类似<strong>内存屏障（Memory-Barrier）</strong>之类的技术。</p>
+<p><img src="https://gitee.com/0909/blog/raw/master/img/20211108172615.png"></p>
+<p>​        如上图，如果线程A在<strong>工作内存</strong>中修改变量X要对线程B可见的话，其首先要将变量X刷新回<strong>主内存</strong>，当变量X被刷新回<strong>主内存</strong>时，线程B立刻能感知到（底层实现上是通过<strong>总线嗅探</strong>）其<strong>工作内存</strong>中的变量X对应<strong>主内存</strong>的值已被修改，于是线程B会将其<strong>工作内存</strong>变量X设置为失效，当线程B后继的操作如果要用户变量X时又会重新从<strong>主内存</strong>加载最新的值。</p>
+<p>​        <strong>JMM</strong>抽象出的<strong>主内存</strong>与<strong>工作内存</strong>的概念，很容易让人想起多核<strong>CPU</strong>架构下的硬件内存模型。<strong>JMM</strong>中的主内存可以理解为计算机的主内存，而<strong>JMM</strong>中的工作内存可以理解为<strong>CPU</strong>中集成的高缓存缓存（<strong>L1 Cache</strong>、<strong>L2 Cache</strong>、<strong>Register</strong>等）。</p>
+<p><img src="https://gitee.com/0909/blog/raw/master/img/20211109140026.png"></p>
+<p>​        硬件内存模型中，各核高速缓存、主内存之间存在<strong>缓存一致性</strong>问题，然后通过缓存一致性协议、总线加锁等方式去解决该问题。类似的<strong>JMM</strong>为解决<strong>缓存一致性</strong>问题，提出了<strong>happens-before规则</strong>，同时采用保<strong>内存屏障技术</strong>实现<strong>happens-before规则</strong>。</p>
+<h4 id="happens-before规则"><a href="#happens-before规则" class="headerlink" title="happens-before规则"></a>happens-before规则</h4><p>​        <strong>JMM</strong>中最重要的概念是<strong>happens-before规则</strong>，其描述了两个操作的内存可见性。如果要保证操作X的结果对操作Y可见（如果操作X与操作Y是否在同一个线程中），那么操作 X要 <strong>happens-before</strong> 操作 Y。如果操作X与操作Y之间不存在 <strong>happens-before</strong> 关系，则JVM可以对操作X与操作Y任意重排。</p>
+<p>​        当一个共享变量被多个线程读写时，如果在读操作与写操作之间没有依照<strong>happens-before规则</strong>，那就会发生<strong>数据竞争</strong>（发生<strong>数据竞争</strong>时程序的执行结果将不可预测）。<strong>JMM</strong>中有如下的<strong>happens-before规则</strong>：</p>
+<ul>
+<li><strong>程序顺序规则</strong>：一个线程中的每个操作，<strong>happens-before</strong>于该线程中的任意后续操作。</li>
+<li><strong>volatile变量规则</strong>：对一个<strong>volatile</strong>变量的写，<strong>happens-before</strong>于任意后续对这个<strong>volatile</strong>变量的读。</li>
+<li><strong>监视器锁定规则</strong>：对对象的<strong>unLock</strong>操作<strong>happens-before</strong>于后面对同一个对象的<strong>lock</strong>操作。</li>
+<li><strong>线程中断规则</strong>：对线程 <strong>interrupt()</strong> 的调用<strong>happens-before</strong>于线程代码中检测到中断事件的发生，可以通过 <strong>Thread.interrupted()</strong> 方法检测是否发生中断。</li>
+<li><strong>线程启动规则</strong>：对线程 <strong>start()</strong> 的操作<strong>happens-before</strong>于线程内的任何操作。</li>
+<li><strong>对象终结规则</strong>：一个对象的初始化完成<strong>happens-before</strong>于它的 <strong>finalize()</strong> 方法的开始。</li>
+<li><strong>传递规则</strong>：如果操作 A <strong>happens-before</strong>于操作 B，而操作 B 又<strong>happens-before</strong>于操作 C，则可以得出操作 A <strong>happens-before</strong>于操作 C。</li>
+</ul>
+<p>​        来看一下平时开发中经常用到的<strong>volatile关键字</strong>与<strong>synchronized关键字</strong>，在<strong>happens-before</strong>规则下的效果。<strong>volatile关键字遵守volatile变量规则</strong>，<strong>其效果是一个线程对taskRunningFlag类型变量的写操作的结果，立刻对其他任意线程对同一个变量的读操作可见</strong>。</p>
+<pre class="line-numbers language-Java"><code class="language-Java">public class App {
+  private volatile boolean taskRunningFlag = true;
+  public static void main(String[] args) {
+    new App().runTask();
+  }
+  public void runTask() {
+    Runnable task = () -> {
+      long startTime = System.currentTimeMillis();
+      while (taskRunningFlag) {
+        System.out.println("Task is running !");
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+      System.out.println("Task run " + (System.currentTimeMillis() - startTime) + "ms !");
+    };
+    new Thread(task).start();
+    Runnable taskController = () -> {
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      System.out.println("After 500 ms stop task !");
+      taskRunningFlag = false;
+    };
+    new Thread(taskController).start();
+  }
+}
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>Task is running !<br>Task is running !<br>Task is running !<br>Task is running !<br>Task is running !<br>After 500 ms stop task !<br>Task run 520ms !</p>
+</blockquote>
+<p>可以看到任务线程一直在进行，直到500ms后任务控制线程将taskRunningFlag设置为false，由于任务控制线程与任务线程在并行运行，任务最终运行时间会略微超过500ms，这里任务运行了520ms，但volatile类型的taskRunningFlag的写操作是对其他线程立即可见的。<strong>注意</strong>：<strong>volatile关键字可以保障单条指令操作的可见性，但不保障多个指令操作的可见性即不保障操作原子性，x++，++x，–x，x–这类操作编译后都对应多个指令所以使用volatile关键字也不能保证操作的可见性，要用AtomicInteger，synchronized关键字等替代。</strong></p>
+<p>​        <strong>synchronized关键字遵守监视器锁定规则，其效果是一个已获得锁的代码块或方法在释放锁之前，其内部的所有操作的结果，对于即将获得到同一把锁的其他线程可见。</strong></p>
+<img src="https://gitee.com/0909/blog/raw/master/img/20211110094418.png" style="zoom:80%;" />
+
+<p>​    </p>
+<p>​        <strong>视器锁定规则的可见性，实际将原子性涵盖进来了，因为其保证的是unlock Monitor 之前的所有操作对于lock Monitor 之后的操作都可见</strong>。如上图线程X中对变量y与变量z的赋值操作，对于后继锁定同一个Monitor的线程Y都是可见的。<strong>注意：线程X与线程Y一定要锁同一个对象的Monitor，才能保障这种可见性规则。别外，JMM在保证正确性的同时会最大限度的放宽对指令重排和乱序执行的限制了。这意味着线程X同步代码块内 y= 7与z = 3是可以进行重排的，只是整个同步代码块内部的操作不会与同步代码块外部的操作重排，理解这点非常重要。</strong></p>
+<h4 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h4><p>​        <strong>happens-before规则属于JMM保证可见性的规范，而非具体实现</strong>。编译器工程师、JVM工程师在实现编译器与<strong>JVM</strong>时，会根据这个规范在适当的位置利用<strong>内存屏障（Memory Barrier）</strong>技术禁止指令重排保证可见性。<strong>内存屏障</strong>可分为<strong>读屏障（Load Barriers）</strong>和<strong>写屏障（Store Barriers）</strong>，<strong>JMM</strong> 中对这两者进行结合共有四种屏障<strong>Load-Load Barriers、Load-Store Barriers、Store-Store Barriers、Store-Load Barriers</strong>。下面看一下不同内存屏障的插入会达到什么要的效果。</p>
+<pre class="line-numbers language-c"><code class="language-c">load1 LoadLoad load2
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<blockquote>
+<p>保证 load1 数据的装载优先于 load2 以及所有后续装载指令的装载。对于 Load Barrier 来说，在指令前插入 Load Barrier，可以让高速缓存中的数据失效，强制重新从主内存加载数据。</p>
+</blockquote>
+<pre class="line-numbers language-c"><code class="language-c">load1 LoadStore store2
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<blockquote>
+<p>保证 load1 数据装载优先于 store2 以及后续的存储指令刷新到内存。</p>
+</blockquote>
+<pre class="line-numbers language-c"><code class="language-c">store1 StoreStore store2
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<blockquote>
+<p>保证 store1 数据对其他处理器可见，优先于 store2 以及所有后续存储指令的存储。对于 Store Barrier 来说，在指令后插入 Store Barrier，能让写入缓存中的最新数据更新写入主内存，让其他线程可见。</p>
+</blockquote>
+<pre class="line-numbers language-c"><code class="language-c">store1 StoreLoad load2
+<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<blockquote>
+<p>在load2 及后续所有读取操作执行前，保证 store1 的写入对所有处理器可见。这条内存屏障指令是一个全能型的屏障，它同时具有其他 3 条屏障的效果，而且它的开销也是四种屏障中最大的一个。</p>
+</blockquote>
+<h4 id="Double-Check-Lock-问题"><a href="#Double-Check-Lock-问题" class="headerlink" title="Double-Check Lock 问题"></a>Double-Check Lock 问题</h4><p>​        单例模式中经常会通过 <strong>Double-Check Lock</strong> 实现实例的惰性加载。单不正确的使用 <strong>Double-Check Lock</strong> 却会带来线程安全问题。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">SingletonInstance</span> <span class="token punctuation">{</span>
+  <span class="token keyword">private</span> <span class="token keyword">static</span> SingletonInstance instance<span class="token punctuation">;</span>
+  <span class="token keyword">public</span> <span class="token keyword">static</span> SingletonInstance <span class="token function">getInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>instance <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">synchronized</span> <span class="token punctuation">(</span>SingletonInstance<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>instance <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          instance <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SingletonInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> instance<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>​        上面的代码，看似能通过<strong>synchronized关键</strong>字保证了顺序性，达到获取正确的SingletonInstance实例，实际却有可能获取到未完全构建的SingletonInstance实例。原因在于 **instance = new SingletonInstance();**这行代码实际可以分为三条指令:</p>
+<blockquote>
+<p>memory = allocate(); // 1：分配对象的内存空间 </p>
+<p>ctorInstance(memory); // 2：初始化对象 </p>
+<p>instance = memory; // 3：设置instance指向刚分配的内存地址 </p>
+</blockquote>
+<p>前面强调过<strong>JMM在保证正确性的同时会最大限度的放宽对指令重排和乱序执行的限制了，这意味着同步代码块/方法内可以进行重排的，只是整个同步代码块/方法内部的操作不会与同步代码块/方法外部的操作重排</strong>。所以在编译器、CPU重排优化后，最后的同步块内的指令执行顺序可能如下：</p>
+<blockquote>
+<p>memory = allocate(); // 1：分配对象的内存空间 </p>
+<p>instance = memory; // 3：设置instance指向刚分配的内存地址 </p>
+<p>ctorInstance(memory); // 2：初始化对象 </p>
+</blockquote>
+<p>现在再来看看线程A与线程B同时调用**SingletonInstance.getInstance()**方法可能出现的结果。</p>
+<p><img src="https://gitee.com/0909/blog/raw/master/img/20211110151913.png"></p>
+<p>如上图紫色为线程A的操作，橙色为线程B的操作。当instance初始为null时，线程A与线程B交替执行后会出现上面的先后执行顺序。最终导致线程B获取到了线程A未完成构建的对象。</p>
+<p><img src="https://gitee.com/0909/blog/raw/master/img/20211110151722.png"></p>
+<p>如何处理该问题呢？可以用<strong>volatile关键字</strong>修饰instance变量，达到禁示分配对象的内存空间、初始化对象、设置instance指向内存地址这三步重排的。正确<strong>Double-Check Lock</strong> 实现的单例模式如下：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">SingletonInstance</span> <span class="token punctuation">{</span>
+  <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">volatile</span> SingletonInstance instance<span class="token punctuation">;</span>
+  <span class="token keyword">public</span> <span class="token keyword">static</span> SingletonInstance <span class="token function">getInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>instance <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">synchronized</span> <span class="token punctuation">(</span>SingletonInstance<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>instance <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          instance <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">SingletonInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> instance<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h4><p>​        翻译不易，点赞、在看、转发是对我莫大的鼓励，关注公众号洞悉源码是对我最大的支持。同时相信我会分享更多干货，我同你一起成长，我同你一起进步。</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p><a target="_blank" rel="noopener" href="http://gee.cs.oswego.edu/dl/cpj/jmm.html">Synchronization and the Java Memory Model</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cs.umd.edu/~pugh/Java/memoryModel/jsr-133-faq.html">JSR 133 (Java Memory Model) FAQ</a></p>
+<p><a target="_blank" rel="noopener" href="http://www.cs.umd.edu/~pugh/Java/memoryModel/DoubleCheckedLocking.html">The “Double-Checked Locking is Broken” Declaration</a></p>
+<p>《Java Concurrency in Practice》</p>
+<p><a target="_blank" rel="noopener" href="https://www.infoq.cn/minibook/Java_memory_model">深入理解Java内存模型</a></p>
+<p>《深入理解Java虚似机》</p>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">叶易</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="https://yeweigen.cn/2021/11/03/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAJava%20Memory%20Model/">https://yeweigen.cn/2021/11/03/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAJava%20Memory%20Model/</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">叶易</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/volatile/">
+                                    <span class="chip bg-color">volatile</span>
+                                </a>
+                            
+                                <a href="/tags/synchronized/">
+                                    <span class="chip bg-color">synchronized</span>
+                                </a>
+                            
+                                <a href="/tags/JMM/">
+                                    <span class="chip bg-color">JMM</span>
+                                </a>
+                            
+                                <a href="/tags/double-check/">
+                                    <span class="chip bg-color">double-check</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="wechat,douban" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <style>
+    #reward {
+        margin: 40px 0;
+        text-align: center;
+    }
+
+    #reward .reward-link {
+        font-size: 1.4rem;
+        line-height: 38px;
+    }
+
+    #reward .btn-floating:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #rewardModal {
+        width: 320px;
+        height: 350px;
+    }
+
+    #rewardModal .reward-title {
+        margin: 15px auto;
+        padding-bottom: 5px;
+    }
+
+    #rewardModal .modal-content {
+        padding: 10px;
+    }
+
+    #rewardModal .close {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 1.3rem;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    #rewardModal .close:hover {
+        color: #ef5350;
+        transform: scale(1.3);
+        -moz-transform:scale(1.3);
+        -webkit-transform:scale(1.3);
+        -o-transform:scale(1.3);
+    }
+
+    #rewardModal .reward-tabs {
+        margin: 0 auto;
+        width: 210px;
+    }
+
+    .reward-tabs .tabs {
+        height: 38px;
+        margin: 10px auto;
+        padding-left: 0;
+    }
+
+    .reward-content ul {
+        padding-left: 0 !important;
+    }
+
+    .reward-tabs .tabs .tab {
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .reward-tabs .tab a {
+        color: #fff;
+        background-color: #ccc;
+    }
+
+    .reward-tabs .tab a:hover {
+        background-color: #ccc;
+        color: #fff;
+    }
+
+    .reward-tabs .wechat-tab .active {
+        color: #fff !important;
+        background-color: #22AB38 !important;
+    }
+
+    .reward-tabs .alipay-tab .active {
+        color: #fff !important;
+        background-color: #019FE8 !important;
+    }
+
+    .reward-tabs .reward-img {
+        width: 210px;
+        height: 210px;
+    }
+</style>
+
+<div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/medias/reward/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/medias/reward/wechat.png" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: 'dzzOMaA4EOg0bP1nuqJdYc8B-gzGzoHsz',
+        appKey: 'rFjC9NRJ6RBOs0vKzhuW4v5L',
+        notify: 'false' === 'true',
+        verify: 'false' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'zh-cn',
+        placeholder: 'just go go'
+    });
+</script>
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
+            <div class="card">
+                <a href="/2021/11/03/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAJava%20Memory%20Model/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/8.jpg" class="responsive-img" alt="深入浅出Java内存模型">
+                        
+                        <span class="card-title">深入浅出Java内存模型</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-11-03
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/java/" class="post-category">
+                                    java
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/volatile/">
+                        <span class="chip bg-color">volatile</span>
+                    </a>
+                    
+                    <a href="/tags/synchronized/">
+                        <span class="chip bg-color">synchronized</span>
+                    </a>
+                    
+                    <a href="/tags/JMM/">
+                        <span class="chip bg-color">JMM</span>
+                    </a>
+                    
+                    <a href="/tags/double-check/">
+                        <span class="chip bg-color">double-check</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2021/10/25/%E4%B8%80%E6%96%87%E8%AF%A6%E8%A7%A3ThreadLocal/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="一文详解ThreadLocal">
+                        
+                        <span class="card-title">一文详解ThreadLocal</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-10-25
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/JDK%E6%BA%90%E7%A0%81/" class="post-category">
+                                    JDK源码
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/JDK%E6%BA%90%E7%A0%81/">
+                        <span class="chip bg-color">JDK源码</span>
+                    </a>
+                    
+                    <a href="/tags/ThreadLocal/">
+                        <span class="chip bg-color">ThreadLocal</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: 叶易的博客<br />'
+            + '文章作者: 叶易<br />'
+            + '文章链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归叶易（https://yeweigen.cn/）所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+    <footer class="page-footer bg-color">
+    
+        <link rel="stylesheet" href="/libs/aplayer/APlayer.min.css">
+<style>
+    .aplayer .aplayer-lrc p {
+        
+        display: none;
+        
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 16px !important;
+    }
+
+    .aplayer .aplayer-lrc p.aplayer-lrc-current {
+        
+        display: none;
+        
+        font-size: 15px;
+        color: #7a309a;
+    }
+
+    
+</style>
+<div class="">
+    
+    <div class="row">
+        <meting-js class="col l8 offset-l2 m10 offset-m1 s12"
+                   server="tencent"
+                   type="song"
+                   id="002OwQWI1D1jXP"
+                   fixed='true'
+                   autoplay='true'
+                   theme='#7a309a'
+                   loop='all'
+                   order='random'
+                   preload='auto'
+                   volume='0.7'
+                   list-folded='true'
+        >
+        </meting-js>
+        <!-- <meting-js  class="col l8 offset-l2 m10 offset-m1 s12" 
+          auto="https://y.qq.com/n/yqq/song/001RGrEX3ija5X.html">
+        </meting-js> -->
+    </div>
+</div>
+
+<script src="/libs/aplayer/APlayer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+
+    
+    <div class="container row center-align" style="margin-bottom: 0px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2021</span>
+            
+            <span id="year">2021</span>
+            <a href="/about" target="_blank">叶易</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            <br>
+            
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            
+            <br>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/knight0707" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:yeweigen0909@126.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Baidu Analytics -->
+
+    <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+    
+    <script src="/libs/others/clicklove.js" async="async"></script>
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+    
+
+	
+    
+
+    
+
+    
+
+    
+    <script src="/libs/instantpage/instantpage.js" type="module"></script>
+    
+
+</body>
+
+</html>
