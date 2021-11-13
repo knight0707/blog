@@ -1,0 +1,1823 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="一文详解JDK中的黑科技Unsafe类, 叶易,叶卫根,架构,架构设计,业务架构,java,JVM,源码分析,netty,Spring,MQ,Kafka,redis,RocketMQ,分布式事务">
+    <meta name="description" content="叶易的博客">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>一文详解JDK中的黑科技Unsafe类 | 叶易的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 5.4.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">叶易的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/about" class="waves-effect waves-light">
+      
+      <i class="fas fa-user-circle" style="zoom: 0.6;"></i>
+      
+      <span>关于</span>
+    </a>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">叶易的博客</div>
+        <div class="logo-desc">
+            
+            叶易的博客
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/about" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-user-circle"></i>
+			
+			关于
+		</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/knight0707/" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/knight0707/" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/1.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">一文详解JDK中的黑科技Unsafe类</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        width: 345px;
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        padding: 35px 0 15px 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content {
+        padding-bottom: 30px;
+        overflow: auto;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+
+        position: absolute;
+        right: 23.5vw;
+        display: block;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Unsafe/">
+                                <span class="chip bg-color">Unsafe</span>
+                            </a>
+                        
+                            <a href="/tags/StampedLock/">
+                                <span class="chip bg-color">StampedLock</span>
+                            </a>
+                        
+                            <a href="/tags/DirectByteBuffer/">
+                                <span class="chip bg-color">DirectByteBuffer</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/JDK%E6%BA%90%E7%A0%81/" class="post-category">
+                                JDK源码
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2021-11-03
+                </div>
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    4.8k
+                </div>
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                    19 分
+                </div>
+                
+
+                
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="far fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h3 id="一文详解JDK中的黑科技Unsafe类"><a href="#一文详解JDK中的黑科技Unsafe类" class="headerlink" title="一文详解JDK中的黑科技Unsafe类"></a>一文详解JDK中的黑科技Unsafe类</h3><h4 id="1-Unsafe类概述"><a href="#1-Unsafe类概述" class="headerlink" title="1 Unsafe类概述"></a>1 Unsafe类概述</h4><p>​        如果说<strong>Java</strong>语言之中有没有什么黑科技，那么<strong>Unsafe</strong>当之为愧。<strong>java</strong>是一种安全性很高的语言，正常情况程序中不用直接操作内存（申请内存与释放内存），<strong>JVM</strong>会按照垃圾回收机制对无用的内存自动进行回收。<strong>Unsafe</strong>类打破了这一切，其提供了一些用于执行低级别、不安全操作的<strong>native方法</strong>，如直接访问系统内存资源、自主管理内存资源等。这些方法一方提升Java运行效率、增强Java语言操作底层资源能力，另一也给java语言的健壮性、安全性带来了隐患，这应该为什么他被命名为<strong>Unsafe</strong>的原因吧。</p>
+<p>​        <strong>JDK9</strong>引入模块化机制后，<strong>Unsafe</strong>类的功能同时存在于<strong>java.base模块的jdk.internal.misc.Unsafe</strong> 与<strong>jdk.unsupported模块的sun.misc.Unsafe</strong>中。两个<strong>Unsafe</strong>类之间有细微的差，<strong>jdk.unsupported模块的sun.misc.Unsafe</strong>主要是为了向后兼容老版本的JDK，其与<strong>JDK9</strong>之前版本的<strong>sun.misc.Unsafe</strong>基本是一样的。而<strong>java.base模块的jdk.internal.misc.Unsafe</strong>，其被分配到<strong>jdk.internal</strong>包中表明该<strong>Unsafe</strong>类主要用于<strong>JDK</strong>本身核心类的实现。<strong>JDK9</strong>开始<strong>JDK</strong>原来依赖的<strong>Unsafe</strong>类已全转由<strong>sun.misc.Unsafe</strong>转为<strong>jdk.internal.misc.Unsafe</strong>。同时在<strong>JDK9</strong>中之前版本<strong>Unsafe</strong>的一些功能已被<strong>VarHandle</strong>类替代（<strong>VarHandle</strong>的功能是在<a target="_blank" rel="noopener" href="http://openjdk.java.net/jeps/193">JEP193</a>中提出的），随着时间的推移<strong>java.base模块的jdk.internal.misc.Unsafe</strong> 类与<strong>jdk.unsupported模块的sun.misc.Unsafe</strong>类终将退出历史的舞台(目前最新的<strong>JDK17</strong>中还存在)，取而代之的将是<strong>java.lang.invoke.VarHandle</strong>类。</p>
+<p>​        在<strong>JDK11</strong>中即可以使用<strong>java.base模块的jdk.internal.misc.Unsafe</strong> 类也可以使用<strong>jdk.unsupported模块的sun.misc.Unsafe</strong>类，但最好别去使用<strong>Unsafe</strong>这个黑科技。<strong>JDK11</strong>中使用<strong>java.base模块的jdk.internal.misc.Unsafe</strong> 类时，编译与运行时要加入对应的参数，否则将会出现一些异常。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">import</span> jdk<span class="token punctuation">.</span>internal<span class="token punctuation">.</span>misc<span class="token punctuation">.</span>Unsafe<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">App</span> <span class="token punctuation">{</span>
+  <span class="token keyword">private</span> Integer i<span class="token punctuation">;</span>
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> Exception<span class="token punctuation">{</span>
+    Unsafe unsafe <span class="token operator">=</span> Unsafe<span class="token punctuation">.</span><span class="token function">getUnsafe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    App app <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">App</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span>app<span class="token punctuation">.</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">long</span> offset <span class="token operator">=</span> unsafe<span class="token punctuation">.</span><span class="token function">objectFieldOffset</span><span class="token punctuation">(</span>App<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">.</span><span class="token function">getDeclaredField</span><span class="token punctuation">(</span><span class="token string">"i"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    unsafe<span class="token punctuation">.</span><span class="token function">putObject</span><span class="token punctuation">(</span>app<span class="token punctuation">,</span> offset<span class="token punctuation">,</span> <span class="token number">613</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span>app<span class="token punctuation">.</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以在Idea下开发为例如果未设置如下编译参数（假设项目未指定<strong>module-info.java</strong>文件，为未命名模块），</p>
+<blockquote>
+<p><strong>–add-exports=java.base/jdk.internal.misc=ALL-UNNAMED</strong></p>
+</blockquote>
+<p>Idea将提示</p>
+<blockquote>
+<p><strong>Package ‘jdk.internal.misc’ is declared in module ‘java.base’, which does not export it to the unnamed module</strong></p>
+</blockquote>
+<p>同样运行程序时，如果未设置如下<strong>VM</strong>参数</p>
+<blockquote>
+<p><strong>–add-opens java.base/jdk.internal.misc=ALL-UNNAMED –illegal-access=warn</strong></p>
+</blockquote>
+<p>控制台将抛出如下异常</p>
+<blockquote>
+<p><strong>Exception in thread “main” java.lang.IllegalAccessError: class org.example.App (in module jdk11.base) cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to module UNNAMED …</strong></p>
+</blockquote>
+<p>当然可以像<strong>JDK9</strong>之前那样去使用<strong>sun.misc.Unsafe</strong>类</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">import</span> java<span class="token punctuation">.</span>lang<span class="token punctuation">.</span>reflect<span class="token punctuation">.</span>Field<span class="token punctuation">;</span>
+<span class="token keyword">import</span> sun<span class="token punctuation">.</span>misc<span class="token punctuation">.</span>Unsafe<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">App</span> <span class="token punctuation">{</span>
+  <span class="token keyword">private</span> Integer i<span class="token punctuation">;</span>
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String<span class="token punctuation">[</span><span class="token punctuation">]</span> args<span class="token punctuation">)</span> <span class="token keyword">throws</span> Exception<span class="token punctuation">{</span>
+    Field f <span class="token operator">=</span> Unsafe<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">.</span><span class="token function">getDeclaredField</span><span class="token punctuation">(</span><span class="token string">"theUnsafe"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    f<span class="token punctuation">.</span><span class="token function">setAccessible</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    Unsafe unsafe <span class="token operator">=</span> <span class="token punctuation">(</span>Unsafe<span class="token punctuation">)</span> f<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>null<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    App app <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">App</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span>app<span class="token punctuation">.</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">long</span> offset <span class="token operator">=</span> unsafe<span class="token punctuation">.</span><span class="token function">objectFieldOffset</span><span class="token punctuation">(</span>App<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">.</span><span class="token function">getDeclaredField</span><span class="token punctuation">(</span><span class="token string">"i"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    unsafe<span class="token punctuation">.</span><span class="token function">putObject</span><span class="token punctuation">(</span>app<span class="token punctuation">,</span> offset<span class="token punctuation">,</span> <span class="token number">613</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span>app<span class="token punctuation">.</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="2-Unsafe类能做什么？"><a href="#2-Unsafe类能做什么？" class="headerlink" title="2 Unsafe类能做什么？"></a>2 Unsafe类能做什么？</h4><p>​        前面说过<strong>Unsafe</strong>类能做一些低级别的操作，如直接访问系统内存资源、自主管理内存资源等。那<strong>Unsafe</strong>类还能做什么？</p>
+<p><img src="https://gitee.com/0909/blog/raw/master/img/20211103172118.png"></p>
+<p>大致总结一下可以分为上面八大类<strong>内存屏障、内存操作、线程调度、系统操作、Class操作、对象操作、CAS操作、数组操作</strong>。</p>
+<p><strong>注意：JDK8之后的版本中Unsafe类与之前版本中的Unsafe类有差异，下面我们基于JDK11来看一下jdk.internal.misc.Unsafe中各功能对应的方法。</strong></p>
+<h4 id="3-内存屏障"><a href="#3-内存屏障" class="headerlink" title="3 内存屏障"></a>3 内存屏障</h4><h5 id="3-1-内存屏障简介"><a href="#3-1-内存屏障简介" class="headerlink" title="3.1 内存屏障简介"></a>3.1 内存屏障简介</h5><p>​        为了提升计算机处理效率，编译器会对编译后的指令进行重排，同时CPU会乱序执行指令。    <strong>内存屏障（Memory Barriers）</strong>技术可以在适当的位置禁止这种重排与乱序执行。<strong>内存屏障</strong>实际是一些特殊的指令，该指令使得在其之前的所有Load操作与Store操作都先于其后的Load操作与Store操作执行。</p>
+<p>​        <strong>内存屏障（Memory Barriers）</strong>可分为<strong>读屏障（Load Barriers）</strong>和<strong>写屏障（Store Barriers）</strong>，这两者进行结合共有四种屏障<strong>Load-Load Barriers、Load-Store Barriers、Store-Store Barriers、Store-Load Barriers</strong>。下面看一下不同内存屏障的插入会达到什么要的效果。</p>
+<pre><code>load1 LoadLoad load2
+</code></pre>
+<blockquote>
+<p>保证 load1 数据的装载优先于 load2 以及所有后续装载指令的装载。对于 Load Barrier 来说，在指令前插入 Load Barrier，可以让高速缓存中的数据失效，强制重新从主内存加载数据。</p>
+</blockquote>
+<pre><code>load1 LoadStore store2
+</code></pre>
+<blockquote>
+<p>保证 load1 数据装载优先于 store2 以及后续的存储指令刷新到内存。</p>
+</blockquote>
+<pre><code>store1 StoreStore store2
+</code></pre>
+<blockquote>
+<p>保证 store1 数据对其他处理器可见，优先于 store2 以及所有后续存储指令的存储。对于 Store Barrier 来说，在指令后插入 Store Barrier，能让写入缓存中的最新数据更新写入主内存，让其他线程可见。</p>
+</blockquote>
+<pre><code>store1 StoreLoad load2
+</code></pre>
+<blockquote>
+<p>在load2 及后续所有读取操作执行前，保证 store1 的写入对所有处理器可见。这条内存屏障指令是一个全能型的屏障，它同时具有其他 3 条屏障的效果，而且它的开销也是四种屏障中最大的一个。</p>
+</blockquote>
+<h5 id="3-2-内存屏障相关方法"><a href="#3-2-内存屏障相关方法" class="headerlink" title="3.2 内存屏障相关方法"></a>3.2 内存屏障相关方法</h5><p><strong>JDK11</strong>中<strong>jdk.internal.misc.Unsafe</strong>类提供了如下方法插入对应的内存屏障。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//读内存屏障，确保屏障前的load操作不会与其后的load操作与store操作重排序。</span>
+<span class="token comment" spellcheck="true">//相当于LoadLoad 与 LoadStore 屏障。其效果是强制读取操作从主内存中获取最新值。</span>
+<span class="token annotation punctuation">@HotSpotIntrinsicCandidate</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">loadFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//写内存屏障，确保屏障前的store操作、load操作不会与其后的store操作重排序。</span>
+<span class="token comment" spellcheck="true">//相当于StoreStore 与 LoadStore 屏障</span>
+<span class="token annotation punctuation">@HotSpotIntrinsicCandidate</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">storeFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//全内存屏障，确保屏障前的store操作、load操作不会与其后的store操作、load操作重排序。</span>
+<span class="token comment" spellcheck="true">//相当于StoreLoad 屏障</span>
+<span class="token annotation punctuation">@HotSpotIntrinsicCandidate</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">fullFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">void</span> <span class="token function">loadLoadFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">loadFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">void</span> <span class="token function">storeStoreFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">storeFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上面方法上**@HotSpotIntrinsicCandidate**注解表示HotSpot虚似机实现时，为提升方法运行性能可能根据具体平台对该方法进行内置的优化。作为Java应用程序开发者可以忽略这个注解。</p>
+<h5 id="3-3-应用场景"><a href="#3-3-应用场景" class="headerlink" title="3.3 应用场景"></a>3.3 应用场景</h5><p>​        <strong>JDK8</strong>中引入了一种新类型的锁<strong>StampedLock</strong>, 该锁是对<strong>ReentrantReadWriteLock</strong>进行一步进行了优化，其之前读写锁的基础上，引入了乐观读锁的概念，这种乐观读锁类似于无锁的操作，完全不会阻塞写线程获取写锁，从而缓解读多写少时写线程“饥饿”现象，在多读几乎没写的场景下效率低高。<strong>但其不支持重入与条件等待</strong>。由于<strong>StampedLock</strong>提供的乐观读锁不阻塞写线程获取写锁，当线程共享变量从主内存load到线程工作内存时，会存在数据不一致问题，所以当使用<strong>StampedLock</strong>的乐观读锁时需要遵从一定的模式来确保数据的一致性。在<strong>StampedLock</strong>的源码中，<strong>Doug Lea</strong> 为我们提供了使用<strong>StampedLock</strong>乐观锁的示例代码，这里稍微简化一如下。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">class</span> <span class="token class-name">Point</span> <span class="token punctuation">{</span>
+  <span class="token keyword">private</span> <span class="token keyword">double</span> x<span class="token punctuation">,</span> y<span class="token punctuation">;</span>
+  <span class="token keyword">private</span> <span class="token keyword">final</span> StampedLock sl <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">StampedLock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">// an exclusively locked method</span>
+  <span class="token keyword">void</span> <span class="token function">move</span><span class="token punctuation">(</span><span class="token keyword">double</span> deltaX<span class="token punctuation">,</span> <span class="token keyword">double</span> deltaY<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">long</span> stamp <span class="token operator">=</span> sl<span class="token punctuation">.</span><span class="token function">writeLock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+      x <span class="token operator">+=</span> deltaX<span class="token punctuation">;</span>
+      y <span class="token operator">+=</span> deltaY<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+      sl<span class="token punctuation">.</span><span class="token function">unlockWrite</span><span class="token punctuation">(</span>stamp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment" spellcheck="true">// a read-only method, upgrade from optimistic read to read lock</span>
+  <span class="token keyword">double</span> <span class="token function">distanceFromOrigin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">long</span> stamp <span class="token operator">=</span> sl<span class="token punctuation">.</span><span class="token function">tryOptimisticRead</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// (1) 获取乐观读锁</span>
+    <span class="token keyword">double</span> currentX <span class="token operator">=</span> x<span class="token punctuation">;</span> <span class="token keyword">double</span> currentY <span class="token operator">=</span> y<span class="token punctuation">;</span><span class="token comment" spellcheck="true">// (2) 复制主内存数据到工作内存</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>sl<span class="token punctuation">.</span><span class="token function">validate</span><span class="token punctuation">(</span>stamp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// (3) 校验乐观读后数据是否发生变化</span>
+      <span class="token keyword">try</span> <span class="token punctuation">{</span>
+        stamp <span class="token operator">=</span> sl<span class="token punctuation">.</span><span class="token function">readLock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//(4) 升级乐观读锁为悲观读锁</span>
+        currentX <span class="token operator">=</span> x<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">//(5) 复制主内存数据到工作内存</span>
+        currentY <span class="token operator">=</span> y<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+        sl<span class="token punctuation">.</span><span class="token function">unlockRead</span><span class="token punctuation">(</span>stamp<span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//(6) 释放悲观读锁</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> Math<span class="token punctuation">.</span><span class="token function">sqrt</span><span class="token punctuation">(</span>currentX <span class="token operator">*</span> currentX <span class="token operator">+</span> currentY <span class="token operator">*</span> currentY<span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment" spellcheck="true">//(7) 线程工作内存计算</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>StampedLock</strong>中写锁还是和<strong>ReentrantReadWriteLock</strong>写锁一致，但读锁不一样。<strong>distanceFromOrigin</strong>计算点x, y到原点的距离时，会先尝试调用<strong>StampedLock#tryOptimisticRead</strong>方法，获取乐观读锁，再将主内存的数据复制到工作内存。但此时其他线程可能调用<strong>move</strong>方法修改了x, y的值，因此要通过<strong>StampedLock#validate</strong>方法校验主内存的数据是否发生变化，如果有发生变化则将乐观读锁升级为悲观读，重新将主内存数据复制到工作内存，否则直接返回计算结果。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/20211112153303.png" style="zoom:80%;" />
+
+<p>下面是<strong>JDK11中StampedLock#validate</strong>方法的源码，在执行校验逻辑之前会通过Unsafe的<strong>loadFence</strong>方法加入一个<strong>load内存屏障</strong>，目的是避免上面的<strong>Point示例</strong>中步骤(2)和<strong>StampedLock#validate</strong>中校验逻辑发生重排序导致校验不准确的问题。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//StampedLock#validate方法</span>
+<span class="token keyword">public</span> <span class="token keyword">boolean</span> <span class="token function">validate</span><span class="token punctuation">(</span><span class="token keyword">long</span> stamp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+   VarHandle<span class="token punctuation">.</span><span class="token function">acquireFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">return</span> <span class="token punctuation">(</span>stamp <span class="token operator">&amp;</span> SBITS<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token punctuation">(</span>state <span class="token operator">&amp;</span> SBITS<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//VarHandle#acquireFence方法</span>
+<span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">acquireFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  UNSAFE<span class="token punctuation">.</span><span class="token function">loadFence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="4-内存操作"><a href="#4-内存操作" class="headerlink" title="4 内存操作"></a>4 内存操作</h4><p>​        <strong>Java</strong>语言中不像c、c++那样要工程师在代码中维护内存的申请与释放，<strong>JVM</strong>中的垃圾回收机制会自动回收内存，但<strong>Unsafe</strong>提供了应用代码层面管理内存的机制，这部分内存是非JVM管理的内存，通常叫作<strong>堆外内存</strong>。</p>
+<h5 id="4-1-内存管理相关方法"><a href="#4-1-内存管理相关方法" class="headerlink" title="4.1 内存管理相关方法"></a>4.1 内存管理相关方法</h5><p><strong>JDK11</strong>中<strong>jdk.internal.misc.Unsafe</strong>类提供了如下内存管理的方法</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//分配指定字节的内存</span>
+<span class="token keyword">public</span> <span class="token keyword">long</span> <span class="token function">allocateMemory</span><span class="token punctuation">(</span><span class="token keyword">long</span> bytes<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//指定地址扩充内存</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">long</span> <span class="token function">reallocateMemory</span><span class="token punctuation">(</span><span class="token keyword">long</span> address<span class="token punctuation">,</span> <span class="token keyword">long</span> bytes<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//释放内存</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">freeMemory</span><span class="token punctuation">(</span><span class="token keyword">long</span> address<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//在给定的内存块中设置值</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">setMemory</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> <span class="token keyword">long</span> bytes<span class="token punctuation">,</span> <span class="token keyword">byte</span> value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//内存拷贝</span>
+<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">copyMemory</span><span class="token punctuation">(</span>Object srcBase<span class="token punctuation">,</span> <span class="token keyword">long</span> srcOffset<span class="token punctuation">,</span> Object destBase<span class="token punctuation">,</span>
+<span class="token keyword">long</span> destOffset<span class="token punctuation">,</span> <span class="token keyword">long</span> bytes<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">//根据偏移地址获取对应对象变量值，变量本身的访问修饰符限制将忽略，类似操作还有getInt、getLong、getChar等</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> Object <span class="token function">getObject</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//根据偏移地址设置对象变量值，变量本身的访问修饰符限制将忽略，类似操作还有putInt、putLong、putChar等</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">putObject</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> Object x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//获取给定地址的byte类型的值（参数address值要为allocateMemory分配，否则结果正确性无法保证）</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">byte</span> <span class="token function">getByte</span><span class="token punctuation">(</span><span class="token keyword">long</span> address<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//为给定地址设置byte类型的值（参数address值要为allocateMemory分配，否则结果正确性无法保证）</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">putByte</span><span class="token punctuation">(</span><span class="token keyword">long</span> address<span class="token punctuation">,</span> <span class="token keyword">byte</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h5 id="4-2-为什么需要堆外内存"><a href="#4-2-为什么需要堆外内存" class="headerlink" title="4.2 为什么需要堆外内存"></a>4.2 为什么需要堆外内存</h5><ul>
+<li><p><strong>改善垃圾回收停顿时长</strong></p>
+<p>由于堆外内存是直接受操作系统管理而不是JVM，所以当我们使用堆外内存时，即可保持较小的堆内内存规模。从而在GC时减少回收停顿对于应用的影响。</p>
+</li>
+<li><p><strong>提升程序I/O操作的性能</strong></p>
+<p>通常在I/O通信过程中，会存在堆内内存到堆外内存的数据拷贝操作，对于需要频繁进行内存间数据拷贝且生命周期较短的暂存数据，都建议存储到堆外内存。</p>
+</li>
+</ul>
+<h5 id="4-3-堆外内存运用之DirectByteBuffer"><a href="#4-3-堆外内存运用之DirectByteBuffer" class="headerlink" title="4.3 堆外内存运用之DirectByteBuffer"></a>4.3 堆外内存运用之DirectByteBuffer</h5><p>​        JDK中<strong>ByteBuffer#allocateDirect</strong>方法能直接分配堆外内存，其实际返回的是<strong>DirectByteBuffer</strong>对象，而<strong>DirectByteBuffer</strong>类内部又通过<strong>Unsafe</strong>的<strong>allocateMemory</strong>、<strong>setMemory</strong>与<strong>freeMemory</strong>等方法管理内存。<strong>NIO</strong>框架<strong>Netty</strong>中大量使用堆外内存，提升I/O操作的性能。</p>
+<pre><code>public static ByteBuffer allocateDirect(int capacity) &#123;
+    return new DirectByteBuffer(capacity);
+&#125;
+</code></pre>
+<p>​        下面是<strong>DirectByteBuffer</strong>构造函数，创建<strong>DirectByteBuffer</strong>的时候，通过<strong>Unsafe#allocateMemory</strong>分配内存、<strong>Unsafe#setMemory</strong>进行内存初始化，而后通过<strong>Cleaner</strong>跟踪<strong>DirectByteBuffer</strong>对象的垃圾回收，以实现当<strong>DirectByteBuffer</strong>被垃圾回收时，通过<strong>Deallocator</strong>调用<strong>Unsafe#freeMemory</strong>回收之前分配的堆外内存。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token function">DirectByteBuffer</span><span class="token punctuation">(</span><span class="token keyword">int</span> cap<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token comment" spellcheck="true">// package-private</span>
+  <span class="token keyword">super</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> cap<span class="token punctuation">,</span> cap<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">boolean</span> pa <span class="token operator">=</span> VM<span class="token punctuation">.</span><span class="token function">isDirectMemoryPageAligned</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> ps <span class="token operator">=</span> Bits<span class="token punctuation">.</span><span class="token function">pageSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">long</span> size <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">max</span><span class="token punctuation">(</span>1L<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">long</span><span class="token punctuation">)</span>cap <span class="token operator">+</span> <span class="token punctuation">(</span>pa <span class="token operator">?</span> ps <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  Bits<span class="token punctuation">.</span><span class="token function">reserveMemory</span><span class="token punctuation">(</span>size<span class="token punctuation">,</span> cap<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">long</span> base <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword">try</span> <span class="token punctuation">{</span>
+    base <span class="token operator">=</span> UNSAFE<span class="token punctuation">.</span><span class="token function">allocateMemory</span><span class="token punctuation">(</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">OutOfMemoryError</span> x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    Bits<span class="token punctuation">.</span><span class="token function">unreserveMemory</span><span class="token punctuation">(</span>size<span class="token punctuation">,</span> cap<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">throw</span> x<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  UNSAFE<span class="token punctuation">.</span><span class="token function">setMemory</span><span class="token punctuation">(</span>base<span class="token punctuation">,</span> size<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">byte</span><span class="token punctuation">)</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>pa <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>base <span class="token operator">%</span> ps <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// Round up to page boundary</span>
+    address <span class="token operator">=</span> base <span class="token operator">+</span> ps <span class="token operator">-</span> <span class="token punctuation">(</span>base <span class="token operator">&amp;</span> <span class="token punctuation">(</span>ps <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    address <span class="token operator">=</span> base<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  cleaner <span class="token operator">=</span> Cleaner<span class="token punctuation">.</span><span class="token function">create</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">Deallocator</span><span class="token punctuation">(</span>base<span class="token punctuation">,</span> size<span class="token punctuation">,</span> cap<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  att <span class="token operator">=</span> null<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>Cleaner</strong>跟踪<strong>DirectByteBuffer</strong>对象的垃圾回收，最终通过<strong>Deallocator</strong>调用<strong>Unsafe#freeMemory</strong>回收<strong>DirectByteBuffer</strong>上分配的堆外内存的整体流程如下图。当<strong>DirectByteBuffer</strong>对象不可达时，垃圾收集器会将<strong>DirectByteBuffer Reference</strong>加入的<strong>pending链表</strong>中，而守护线程<strong>ReferenceHandler</strong>，会不断地从<strong>pending链表</strong>中获取节点处理，如果节点的<strong>Reference</strong>类型为<strong>PhantomReference</strong>引用的子类<strong>Cleaner</strong>，守护线程在处理时会调用该<strong>Refence</strong>绑定的<strong>Cleaner#clean方法</strong>，即<strong>DirectByteBuffer</strong>绑定的<strong>Cleaner</strong>，这个<strong>Cleaner</strong>会通过<strong>Deallocator#run</strong>方法调用<strong>Unsafe#freeMemory</strong>，最终实现<strong>DirectByteBuffer</strong>上分配的堆外内存被回收。</p>
+<img src="https://gitee.com/0909/blog/raw/master/img/20211112151451.png" style="zoom:80%;" />
+
+<p>具体的源码分析可以参考我之前的文章<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/8f29ZfGvZVPe0bO-FahokQ">Java Reference核心原理分析</a>。</p>
+<h4 id="5-线程调度"><a href="#5-线程调度" class="headerlink" title="5 线程调度"></a>5 线程调度</h4><p>​        <strong>JDK</strong>内部有一个很重要的类<strong>LockSupport</strong> ，Java锁和同步器框架的核心类<strong>AbstractQueuedSynchronizer</strong>中线程的挂起与恢复全依赖于<strong>LockSupport#park方法与LockSupport#unpark方法</strong>，而<strong>LockSupport</strong>类的<strong>park</strong>方法、<strong>unpark</strong>方法分别依赖于<strong>Unsafe</strong>类的<strong>park</strong>方法、<strong>unpark</strong>方法。</p>
+<p><strong>JDK11</strong>中<strong>LockSupport</strong>类与<strong>Unsafe</strong>类中线程调用相关方法如下。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//LockSupport类park与unpark方法</span>
+<span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">park</span><span class="token punctuation">(</span>Object blocker<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  Thread t <span class="token operator">=</span> Thread<span class="token punctuation">.</span><span class="token function">currentThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">setBlocker</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> blocker<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  U<span class="token punctuation">.</span><span class="token function">park</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">,</span> 0L<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">setBlocker</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> null<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">unpark</span><span class="token punctuation">(</span>Thread thread<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>thread <span class="token operator">!=</span> null<span class="token punctuation">)</span>
+    U<span class="token punctuation">.</span><span class="token function">unpark</span><span class="token punctuation">(</span>thread<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//Unsafe类park与unpark方法</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">unpark</span><span class="token punctuation">(</span>Object thread<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">park</span><span class="token punctuation">(</span><span class="token keyword">boolean</span> isAbsolute<span class="token punctuation">,</span> <span class="token keyword">long</span> time<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>注意：JDK8的Unsafe中还有monitorEnter、monitorExit、tryMonitorEnter方法，但在JDK11的jdk.internal.misc.Unsafe类中已将这些方法移除。</strong></p>
+<h4 id="6-CAS操作"><a href="#6-CAS操作" class="headerlink" title="6 CAS操作"></a>6 CAS操作</h4><p>​        <strong>CAS操作</strong>是<strong>Compare And Swap</strong>的简写，其核心思想是先比较再交互，有点类似是乐观锁，通过version比较再进行更新，如果version值发生变化则更新将失败。其将预期原值与当前原值比较，如果相同则表示未发生改变，则用新值去更新原值，否则代表原值已改变<strong>CAS操作</strong>将失败。<strong>Unsafe</strong>底层实现<strong>CAS操作</strong>依赖于CPU的原子指令（<strong>cmpxchg指令</strong>)。</p>
+<p><strong>JDK11</strong>中<strong>jdk.internal.misc.Unsafe</strong>类提供了如下<strong>CAS操作</strong>方法，<strong>JDK8</strong>以后<strong>Swap</strong> 这个单词被换成了<strong>Exchange</strong>，之前版本都是<em><strong>compareAndSwap</strong></em>***这类的方法。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">// 同时针对Long、Byte、Boolean等提供的类似的compareAndExchange***方法</span>
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">native</span> <span class="token keyword">int</span> <span class="token function">compareAndExchangeInt</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> <span class="token keyword">int</span> expected<span class="token punctuation">,</span> <span class="token keyword">int</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 同时针对Long、Byte、Boolean等提供的类似的compareAndSet***方法</span>
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">native</span> <span class="token keyword">boolean</span> <span class="token function">compareAndSetInt</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> <span class="token keyword">int</span> expected<span class="token punctuation">,</span> <span class="token keyword">int</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">native</span> Object <span class="token function">compareAndExchangeObject</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> 
+   Object expected<span class="token punctuation">,</span> Object x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">native</span> <span class="token keyword">boolean</span> <span class="token function">compareAndSetObject</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span>Object expected<span class="token punctuation">,</span> 
+   Object x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>​        <strong>CAS操作</strong>在<strong>AtomicInteger</strong>类中大量使用，如下源码中<strong>VALUE</strong>代表<strong>AtomicInteger</strong>中存储的实际value值相对的内存地址偏移量，有了这偏移量后，便可调用<strong>Unsafe</strong>类的<strong>CAS</strong>操作。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">AtomicInteger</span> <span class="token keyword">extends</span> <span class="token class-name">Number</span> <span class="token keyword">implements</span> <span class="token class-name">java<span class="token punctuation">.</span>io<span class="token punctuation">.</span>Serializable</span> <span class="token punctuation">{</span>
+  <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> jdk<span class="token punctuation">.</span>internal<span class="token punctuation">.</span>misc<span class="token punctuation">.</span>Unsafe U <span class="token operator">=</span> jdk<span class="token punctuation">.</span>internal<span class="token punctuation">.</span>misc<span class="token punctuation">.</span>Unsafe<span class="token punctuation">.</span><span class="token function">getUnsafe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">long</span> VALUE <span class="token operator">=</span> U<span class="token punctuation">.</span><span class="token function">objectFieldOffset</span><span class="token punctuation">(</span>AtomicInteger<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">,</span> <span class="token string">"value"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">private</span> <span class="token keyword">volatile</span> <span class="token keyword">int</span> value<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="7-对象操作"><a href="#7-对象操作" class="headerlink" title="7 对象操作"></a>7 对象操作</h4><p>​        对象操作主要是先通过<strong>Field</strong>或是<strong>Class</strong>与变量名获取对象成员属性相对于对象本身的内存地址的偏移量，然后再利用这个内存偏移量做一些其他的操作比如设置变量值、通过<strong>CAS操作</strong>设置值、采用<strong>volatile</strong>的存储语义写变量的值、采用<strong>volatile</strong>的加载语义读取变量的值。还一个<strong>allocateInstance</strong>方法，可以该方法可发绕过构造方法创建对象，只要传入对应的class就行，并且其不需要初始化代码、JVM安全检查等。</p>
+<p><strong>JDK11</strong>中<strong>jdk.internal.misc.Unsafe</strong>类提供了如下对象操作方法：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//通过Field获取对象成员属性相对于对象本身的内存地址的偏移量</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">long</span> <span class="token function">objectFieldOffset</span><span class="token punctuation">(</span>Field f<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//通过Class与变量名，获取对象成员属性相对于对象本身的内存地址的偏移量</span>
+<span class="token keyword">public</span> <span class="token keyword">long</span> <span class="token function">objectFieldOffset</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> c<span class="token punctuation">,</span> String name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//获得给定对象的指定地址偏移量的值，还有基于int、long、char等类似的操作</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> Object <span class="token function">getObject</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//给定对象的指定地址偏移量设值，还有基于int、long、char等类似的操作</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">putObject</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> Object x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//从对象的指定偏移量处获取变量的引用，采用volatile的加载语义，还有基于int、long、char等类似的操作</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> Object <span class="token function">getObjectVolatile</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//存储变量的引用到对象的指定的偏移量处，采用volatile的存储语义，还有基于int、long、char等类似的操作</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">putObjectVolatile</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> Object x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//有序、延迟版本的putObjectVolatile方法，不保证值的改变被其他线程立即看到。</span>
+<span class="token comment" spellcheck="true">// 只有在field被volatile修饰符修饰时有效，还有基于int、long、char等类似的操作</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">void</span> <span class="token function">putOrderedObject</span><span class="token punctuation">(</span>Object o<span class="token punctuation">,</span> <span class="token keyword">long</span> offset<span class="token punctuation">,</span> Object x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//绕过构造方法、初始化代码来创建对象</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> Object <span class="token function">allocateInstance</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> cls<span class="token punctuation">)</span> <span class="token keyword">throws</span> InstantiationException<span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="8-数组操作"><a href="#8-数组操作" class="headerlink" title="8 数组操作"></a>8 数组操作</h4><p>​        数组相关的操作主要有<strong>arrayBaseOffset</strong>与<strong>arrayIndexScale</strong>这两个方法，<strong>arrayBaseOffset</strong>用于获取数组首个元素相对的内存地址偏移量，而<strong>arrayIndexScale</strong>用于获取数组中一个元素占用内存的大小，两者配合起来使用，便可定位数组中每个元素在内存地址中的位置。然后结合上面的对象操作方法，设置获取、更改数组元素的值。</p>
+<p><strong>JDK11</strong>中<strong>jdk.internal.misc.Unsafe</strong>类提供了如下数组操作方法：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//获取数组首个元素相对的内存地址偏移量</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">int</span> <span class="token function">arrayBaseOffset</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> arrayClass<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//取数组中一个元素占用内存的大小</span>
+<span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">int</span> <span class="token function">arrayIndexScale</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> arrayClass<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>​        <strong>JDK8</strong>中<strong>AtomicIntegerArray、AtomicLongArray</strong>便结合这个方法来操作其内存存储数据的数组。<strong>JDK9</strong>后已改用<strong>VarHandler</strong>内部的方法。</p>
+<p><strong>JDK8</strong>中的<strong>AtomicIntegerArray</strong>部分源码</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">AtomicIntegerArray</span> <span class="token keyword">implements</span> <span class="token class-name">java<span class="token punctuation">.</span>io<span class="token punctuation">.</span>Serializable</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> Unsafe unsafe <span class="token operator">=</span> Unsafe<span class="token punctuation">.</span><span class="token function">getUnsafe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">//获取数组首个元素相对的内存地址偏移量</span>
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> base <span class="token operator">=</span> unsafe<span class="token punctuation">.</span><span class="token function">arrayBaseOffset</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> <span class="token keyword">int</span> shift<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">final</span> <span class="token keyword">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> array<span class="token punctuation">;</span>
+    <span class="token keyword">static</span> <span class="token punctuation">{</span>
+          <span class="token comment" spellcheck="true">//取数组中一个元素占用内存的大小</span>
+        <span class="token keyword">int</span> scale <span class="token operator">=</span> unsafe<span class="token punctuation">.</span><span class="token function">arrayIndexScale</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>scale <span class="token operator">&amp;</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"data type scale not a power of two"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        shift <span class="token operator">=</span> <span class="token number">31</span> <span class="token operator">-</span> Integer<span class="token punctuation">.</span><span class="token function">numberOfLeadingZeros</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+      <span class="token comment" spellcheck="true">//通过下标计算index为i的元素，相对的内存地址偏移量</span>
+      <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">long</span> <span class="token function">byteOffset</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">long</span><span class="token punctuation">)</span> i <span class="token operator">&lt;&lt;</span> shift<span class="token punctuation">)</span> <span class="token operator">+</span> base<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+      <span class="token keyword">private</span> <span class="token keyword">long</span> <span class="token function">checkedByteOffset</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>i <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">||</span> i <span class="token operator">>=</span> array<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IndexOutOfBoundsException</span><span class="token punctuation">(</span><span class="token string">"index "</span> <span class="token operator">+</span> i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token function">byteOffset</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+      <span class="token comment" spellcheck="true">//通过上面7小节中的对象操作，在指定内存地址中采用volatile的存储语义写入值</span>
+      <span class="token keyword">public</span> <span class="token keyword">final</span> <span class="token keyword">void</span> <span class="token function">set</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">,</span> <span class="token keyword">int</span> newValue<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        unsafe<span class="token punctuation">.</span><span class="token function">putIntVolatile</span><span class="token punctuation">(</span>array<span class="token punctuation">,</span> <span class="token function">checkedByteOffset</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">,</span> newValue<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+      
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>Unsafe</strong>类中有<strong>Class</strong>与系统的操作就不一一看了，感兴趣的同学可以自己看一下<strong>Unsafe</strong>的源码。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>​        本文介绍了<strong>JDK</strong>中的黑科技<strong>Unsafe</strong>类，按功能进行了归类划分，并介绍了这些方法的使用场景，部分功能还结合了源码进行了简单地分析。还是那句话<strong>Unsafe</strong>类提供了一些用于执行低级别、不安全操作的<strong>native方法</strong>，如直接访问系统内存资源、自主管理内存资源等，不会用千万别乱用（它是<strong>unsafe</strong>的），但作为黑科技不了解怎么算得算是Java工程师呢。</p>
+<h4 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h4><p>​        原创不易，点赞、在看、转发是对我莫大的鼓励，关注公众号洞悉源码是对我最大的支持。同时相信我会分享更多干货，我同你一起成长，我同你一起进步。</p>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">叶易</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="https://yeweigen.cn/2021/11/03/%E4%B8%80%E6%96%87%E8%AF%A6%E8%A7%A3JDK%E4%B8%AD%E7%9A%84%E9%BB%91%E7%A7%91%E6%8A%80Unsafe/">https://yeweigen.cn/2021/11/03/%E4%B8%80%E6%96%87%E8%AF%A6%E8%A7%A3JDK%E4%B8%AD%E7%9A%84%E9%BB%91%E7%A7%91%E6%8A%80Unsafe/</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">叶易</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/Unsafe/">
+                                    <span class="chip bg-color">Unsafe</span>
+                                </a>
+                            
+                                <a href="/tags/StampedLock/">
+                                    <span class="chip bg-color">StampedLock</span>
+                                </a>
+                            
+                                <a href="/tags/DirectByteBuffer/">
+                                    <span class="chip bg-color">DirectByteBuffer</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="wechat,douban" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <style>
+    #reward {
+        margin: 40px 0;
+        text-align: center;
+    }
+
+    #reward .reward-link {
+        font-size: 1.4rem;
+        line-height: 38px;
+    }
+
+    #reward .btn-floating:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #rewardModal {
+        width: 320px;
+        height: 350px;
+    }
+
+    #rewardModal .reward-title {
+        margin: 15px auto;
+        padding-bottom: 5px;
+    }
+
+    #rewardModal .modal-content {
+        padding: 10px;
+    }
+
+    #rewardModal .close {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 1.3rem;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    #rewardModal .close:hover {
+        color: #ef5350;
+        transform: scale(1.3);
+        -moz-transform:scale(1.3);
+        -webkit-transform:scale(1.3);
+        -o-transform:scale(1.3);
+    }
+
+    #rewardModal .reward-tabs {
+        margin: 0 auto;
+        width: 210px;
+    }
+
+    .reward-tabs .tabs {
+        height: 38px;
+        margin: 10px auto;
+        padding-left: 0;
+    }
+
+    .reward-content ul {
+        padding-left: 0 !important;
+    }
+
+    .reward-tabs .tabs .tab {
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .reward-tabs .tab a {
+        color: #fff;
+        background-color: #ccc;
+    }
+
+    .reward-tabs .tab a:hover {
+        background-color: #ccc;
+        color: #fff;
+    }
+
+    .reward-tabs .wechat-tab .active {
+        color: #fff !important;
+        background-color: #22AB38 !important;
+    }
+
+    .reward-tabs .alipay-tab .active {
+        color: #fff !important;
+        background-color: #019FE8 !important;
+    }
+
+    .reward-tabs .reward-img {
+        width: 210px;
+        height: 210px;
+    }
+</style>
+
+<div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/medias/reward/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/medias/reward/wechat.png" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: 'dzzOMaA4EOg0bP1nuqJdYc8B-gzGzoHsz',
+        appKey: 'rFjC9NRJ6RBOs0vKzhuW4v5L',
+        notify: 'false' === 'true',
+        verify: 'false' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'zh-cn',
+        placeholder: 'just go go'
+    });
+</script>
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
+            <div class="card">
+                <a href="/2021/11/03/%E4%B8%80%E6%96%87%E8%AF%A6%E8%A7%A3JDK%E4%B8%AD%E7%9A%84%E9%BB%91%E7%A7%91%E6%8A%80Unsafe/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="一文详解JDK中的黑科技Unsafe类">
+                        
+                        <span class="card-title">一文详解JDK中的黑科技Unsafe类</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-11-03
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/JDK%E6%BA%90%E7%A0%81/" class="post-category">
+                                    JDK源码
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Unsafe/">
+                        <span class="chip bg-color">Unsafe</span>
+                    </a>
+                    
+                    <a href="/tags/StampedLock/">
+                        <span class="chip bg-color">StampedLock</span>
+                    </a>
+                    
+                    <a href="/tags/DirectByteBuffer/">
+                        <span class="chip bg-color">DirectByteBuffer</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2021/11/03/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAJava%20Memory%20Model/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/8.jpg" class="responsive-img" alt="深入浅出Java内存模型">
+                        
+                        <span class="card-title">深入浅出Java内存模型</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-11-03
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/java/" class="post-category">
+                                    java
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/volatile/">
+                        <span class="chip bg-color">volatile</span>
+                    </a>
+                    
+                    <a href="/tags/synchronized/">
+                        <span class="chip bg-color">synchronized</span>
+                    </a>
+                    
+                    <a href="/tags/JMM/">
+                        <span class="chip bg-color">JMM</span>
+                    </a>
+                    
+                    <a href="/tags/double-check/">
+                        <span class="chip bg-color">double-check</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: 叶易的博客<br />'
+            + '文章作者: 叶易<br />'
+            + '文章链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归叶易（https://yeweigen.cn/）所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+    <footer class="page-footer bg-color">
+    
+        <link rel="stylesheet" href="/libs/aplayer/APlayer.min.css">
+<style>
+    .aplayer .aplayer-lrc p {
+        
+        display: none;
+        
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 16px !important;
+    }
+
+    .aplayer .aplayer-lrc p.aplayer-lrc-current {
+        
+        display: none;
+        
+        font-size: 15px;
+        color: #7a309a;
+    }
+
+    
+</style>
+<div class="">
+    
+    <div class="row">
+        <meting-js class="col l8 offset-l2 m10 offset-m1 s12"
+                   server="tencent"
+                   type="song"
+                   id="002OwQWI1D1jXP"
+                   fixed='true'
+                   autoplay='true'
+                   theme='#7a309a'
+                   loop='all'
+                   order='random'
+                   preload='auto'
+                   volume='0.7'
+                   list-folded='true'
+        >
+        </meting-js>
+        <!-- <meting-js  class="col l8 offset-l2 m10 offset-m1 s12" 
+          auto="https://y.qq.com/n/yqq/song/001RGrEX3ija5X.html">
+        </meting-js> -->
+    </div>
+</div>
+
+<script src="/libs/aplayer/APlayer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+
+    
+    <div class="container row center-align" style="margin-bottom: 0px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2021</span>
+            
+            <span id="year">2021</span>
+            <a href="/about" target="_blank">叶易</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            <br>
+            
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            
+            <br>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/knight0707" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:yeweigen0909@126.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Baidu Analytics -->
+
+    <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+    
+    <script src="/libs/others/clicklove.js" async="async"></script>
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+    
+
+	
+    
+
+    
+
+    
+
+    
+    <script src="/libs/instantpage/instantpage.js" type="module"></script>
+    
+
+</body>
+
+</html>
