@@ -1,0 +1,1840 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="深入分析Dubbo SPI 机制实现原理之实践应用, 叶易,叶卫根,架构,架构设计,业务架构,java,JVM,源码分析,netty,Spring,MQ,Kafka,redis,RocketMQ,分布式事务">
+    <meta name="description" content="叶易的博客">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>深入分析Dubbo SPI 机制实现原理之实践应用 | 叶易的博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 5.4.0"><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+
+
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">叶易的博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/about" class="waves-effect waves-light">
+      
+      <i class="fas fa-user-circle" style="zoom: 0.6;"></i>
+      
+      <span>关于</span>
+    </a>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">叶易的博客</div>
+        <div class="logo-desc">
+            
+            叶易的博客
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/about" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-user-circle"></i>
+			
+			关于
+		</a>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/knight0707/" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/knight0707/" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/21.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">深入分析Dubbo SPI 机制实现原理之实践应用</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        width: 345px;
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        padding: 35px 0 15px 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content {
+        padding-bottom: 30px;
+        overflow: auto;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+
+        position: absolute;
+        right: 23.5vw;
+        display: block;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Dubbo/">
+                                <span class="chip bg-color">Dubbo</span>
+                            </a>
+                        
+                            <a href="/tags/SPI/">
+                                <span class="chip bg-color">SPI</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Dubbo/" class="post-category">
+                                Dubbo
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2022-01-11
+                </div>
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    5.4k
+                </div>
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                    21 分
+                </div>
+                
+
+                
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="far fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h3 id="深入分析Dubbo-SPI-机制实现原理之实践应用"><a href="#深入分析Dubbo-SPI-机制实现原理之实践应用" class="headerlink" title="深入分析Dubbo SPI 机制实现原理之实践应用"></a>深入分析Dubbo SPI 机制实现原理之实践应用</h3><p>​        Dubbo采用”微内核+插件”的方式实现了对扩展开发对修改封闭，有效地将框架的内核与扩展进行了解耦。Dubbo扩展jdk原生的SPI机制，实现依赖注入、AOP、按需创建实例三个核心功能。本文将从JDK原生的SPI机制开始，逐步深入分析Dubbo中的SPI机制。Dubbo中的SPI机制利用了策略模式+工厂模式+单例模式+配置文件，深入理解其原理有利于日常开发写出扩展性更高、耦合度更低的高质量代码。深入分析Dubbo SPI 机制实现原理将分为两篇《深入分析Dubbo SPI 机制实现原理之应用》与《深入分析Dubbo SPI 机制实现原理之源码解读》，《深入分析Dubbo SPI 机制实现原理之实践应用》即本篇侧重分析Dubbo的SPI机制整体如何实现与具体实践应用，《深入分析Dubbo SPI 机制实现原理之源码解读》侧重结合源码深入分析。</p>
+<h4 id="1-JDK-中SPI机制"><a href="#1-JDK-中SPI机制" class="headerlink" title="1 JDK 中SPI机制"></a>1 JDK 中SPI机制</h4><p>​        SPI (Service Provider Interface) 是jdk中自带的一种服务定义与提供机制。服务定义一般由权威的组织或机构完成，即服务相关的核心接口的定义；服务提供一般由第三方厂商实现，即服务相关的核心接口的具体实现；服务的使用者并不关心不同厂商具体实现的差异，而是按照标准的接口完成实现业务逻辑。SPI中最具代表性的便是JDBC规范，JDK中给出的数据操作的核心接口定义，而像mysql、SQL Server、Oraclet等数据库厂商则提供了具体实现的Connector jar实现。以JDBC为例，JDBC规范定义了Driver接口，而像mysql厂商则提供了具体的Connector jar，并在jar中包含<code>META-INF/services</code>目录，该目录下有一个名为java.sql.Driver的文件，即JDBC规范定义的Driver接口，其内容为mysql厂商的具体实现类：</p>
+<blockquote>
+<p>com.mysql.jdbc.Driver<br>com.mysql.fabric.jdbc.FabricMySQLDriver</p>
+</blockquote>
+<p>在JDBC4规范中，作为使用者只要classpath下面有对应的mysql connector，直接用下面代码便可以获取mysql数据库的连接。</p>
+<pre class="line-numbers language-java"><code class="language-java">Connection conn <span class="token operator">=</span> 
+  DriverManager<span class="token punctuation">.</span><span class="token function">getConnection</span><span class="token punctuation">(</span><span class="token string">"jdbc:mysql://localhost:3306/mydb"</span><span class="token punctuation">,</span> <span class="token string">"test"</span><span class="token punctuation">,</span><span class="token string">"test"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>同样如果是SQL Server的话，只要修改对应获取Connection的url参数，更改classpath下面connector为SQL Server 就可以获取SQL Server数据库的连接。这样一来就将不同厂商在数据库Driver实现上差别给屏蔽了，达到了关注点分离的目的，业务开发人员只要按照JDBC的规范去写业务逻辑，当然像Mybatis、Hiberante等ORM框架又在JDBC规范上做更多的封装让操作数据库变得更加友好简单。</p>
+<h5 id="1-1-JDK-中SPI如何使用"><a href="#1-1-JDK-中SPI如何使用" class="headerlink" title="1.1 JDK 中SPI如何使用"></a>1.1 JDK 中SPI如何使用</h5><p>可以看到SPI整体可分为三步服务定义、服务提供、服务调用</p>
+<ul>
+<li><p><strong>服务定义</strong> 主要是为服务或功能提供接口的定义与抽象。下面代码是Repository服务的定义。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">package</span> example<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">Repository</span> <span class="token punctuation">{</span>
+  <span class="token keyword">void</span> <span class="token function">save</span><span class="token punctuation">(</span>String data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+<li><p><strong>服务提供</strong> 根据自身特点实现服务定义阶段定义的接口，并在classpath下面创建<code>META-INF/services</code>目录，该目录下有一个文件名与已定义好的接口名一致的文件（如上看到的java.sql.Driver），文件内容为该接口的具体实现类的类名，如果有多个具体实际则换行，一行一个具体实现类的类名。下面代码是Repository服务的不同实现，以及按SPI规则将服务暴露出去。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">package</span> example<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">MysqlRepository</span> <span class="token keyword">implements</span> <span class="token class-name">Repository</span> <span class="token punctuation">{</span>
+  <span class="token annotation punctuation">@Override</span>
+  <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">save</span><span class="token punctuation">(</span>String data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span>data <span class="token operator">+</span> <span class="token string">" saved by Mysql Repository!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">package</span> example<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">MongoDBRepository</span> <span class="token keyword">implements</span> <span class="token class-name">Repository</span> <span class="token punctuation">{</span>
+  <span class="token annotation punctuation">@Override</span>
+  <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">save</span><span class="token punctuation">(</span>String data<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span>data <span class="token operator">+</span> <span class="token string">" saved by MongoDB repository!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>META-INF/services/example.Repository 文件内容如下：</p>
+<blockquote>
+<p>example.MongoDBRepository<br>example.MysqlRepository        </p>
+</blockquote>
+</li>
+<li><p><strong>服务调用</strong> 通过classpath下面引用上面服务提供方实现的具体Jar（如果服务提供与服务调用在同一工程可以直接进行使用），然后通ServiceLoader#load方法加载对应服务，并通过ServiceLoader#iterator方法遍历可用的服务。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//通过load方法加载对应服务</span>
+ServiceLoader<span class="token operator">&lt;</span>Repository<span class="token operator">></span> serviceLoader <span class="token operator">=</span> ServiceLoader<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>Repository<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//遍历可用的服务</span>
+Iterator<span class="token operator">&lt;</span>Repository<span class="token operator">></span> iterator <span class="token operator">=</span> serviceLoader<span class="token punctuation">.</span><span class="token function">iterator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">while</span> <span class="token punctuation">(</span>iterator<span class="token punctuation">.</span><span class="token function">hasNext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  Repository repository <span class="token operator">=</span> iterator<span class="token punctuation">.</span><span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">//调用实际服务</span>
+  repository<span class="token punctuation">.</span><span class="token function">save</span><span class="token punctuation">(</span><span class="token string">"Data"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+</ul>
+<h5 id="1-2-JDK-中SPI核心源分析"><a href="#1-2-JDK-中SPI核心源分析" class="headerlink" title="1.2 JDK 中SPI核心源分析"></a>1.2 JDK 中SPI核心源分析</h5><p>​        JDK的SPI的本质是从配置文件中获取接口的具体实现类，然后通过类的全限定名加载类并通过无参数的构造函数反射创建对象。下面结合上面的例子简单的分析一下SPI的核心源码。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//ServiceLoader#load加载服务</span>
+<span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token operator">&lt;</span>S<span class="token operator">></span> ServiceLoader<span class="token operator">&lt;</span>S<span class="token operator">></span> <span class="token function">load</span><span class="token punctuation">(</span>Class<span class="token operator">&lt;</span>S<span class="token operator">></span> service<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">//获取当前线程的ClassLoader，这个ClassLoader是AppClassLoader</span>
+  ClassLoader cl <span class="token operator">=</span> Thread<span class="token punctuation">.</span><span class="token function">currentThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getContextClassLoader</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> ServiceLoader<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>service<span class="token punctuation">,</span> cl<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//ServiceLoader$LazyIterator#nextService 获取下一个可用服务实现，省略无关代码</span>
+<span class="token keyword">private</span> S <span class="token function">nextService</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    Class<span class="token operator">&lt;</span><span class="token operator">?</span><span class="token operator">></span> c <span class="token operator">=</span> null<span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">/**以上面Repository服务的SPI为例，变量cn实际是保存在META-INF/services/example.Repository
+  文件中的类名example.MongoDBRepository或example.MysqlRepository每次遍历服务时获取一个**/</span>
+  String cn <span class="token operator">=</span> nextName<span class="token punctuation">;</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">//参数loader为ServiceLoader#load方法中通过contextClassLoader获取到的AppClassLoader</span>
+        c <span class="token operator">=</span> Class<span class="token punctuation">.</span><span class="token function">forName</span><span class="token punctuation">(</span>cn<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> loader<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">ClassNotFoundException</span> x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment" spellcheck="true">//省略无关代码...</span>
+    <span class="token punctuation">}</span>
+  <span class="token comment" spellcheck="true">//省略无关代码...</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">//通过反射调用类的无参构造函数创建对象</span>
+        S p <span class="token operator">=</span> service<span class="token punctuation">.</span><span class="token function">cast</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span><span class="token function">newInstance</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        providers<span class="token punctuation">.</span><span class="token function">put</span><span class="token punctuation">(</span>cn<span class="token punctuation">,</span> p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> p<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">Throwable</span> x<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//省略无关代码...</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>​        通过前面核心源码的分析，可以看到JDK原生的SPI机制是通过获取配置文件中接口实现类的全限定类名，然后通过反射调用无参数构造函数创建对象来实现服务定义与具体实现的隔离，但对于像Dubbo这像的RPC框架而言JDK原生的SPI机制，显得过于简单与粗暴。虽然SPI机制利用反射隐式地为我们创建对象，但却只能通过无参地构造方法创建对象。如果SPI能像Spring框架中那样具备依赖注入、AOP、按需加载实例是不是能更好地满足Dubbo框架将核心接口定义与具体实现分离的诉求（”微内核+插件” 的诉求）呢？实际Dubbo拓展的SPI机制便实现了依赖注入、AOP、按需加载实例的功能，我仿佛在Dubbo的SPI机制上看到了Spring的身影。</p>
+<h4 id="2-Dubbo中SPI机制概述"><a href="#2-Dubbo中SPI机制概述" class="headerlink" title="2 Dubbo中SPI机制概述"></a>2 Dubbo中SPI机制概述</h4><p>​        有了上面对JDK原生SPI的一个整体认识后，再理解Dubbo中的SPI机制将相对容易很多。Dubbo的拓展的SPI机制核心要解决三件事，即<strong>如何实现按需创建实例、如何实现依赖注入、如何实现AOP</strong>，当然除了这三点外Dubbo的SPI机制还提供超强的自适应拓展机制。在没有分析Dubbo中的SPI机制前，大家可以思考一下如何去实现这三点。本节先整体看一下怎么使用Dubbo中SPI机制提供的各种能力，下一节通过源码深入分析具体实现。    </p>
+<p><strong>注意：后面分析是基于dubbo-2.6.4</strong> </p>
+<h5 id="2-1-Dubbo-中SPI基本用法"><a href="#2-1-Dubbo-中SPI基本用法" class="headerlink" title="2.1 Dubbo 中SPI基本用法"></a>2.1 Dubbo 中SPI基本用法</h5><pre><code>     Dubbo中的SPI机制同样是通过解析配置文件获取接口的具体实现类，然后通过反射完成对象创建与依赖注入，同时在创建对象的过程中会判断是否有Wrapper类的存在来实现AOP功能（本质上Dubbo中的SPI实现AOP是通过静态代理的）。与JDK的SPI机制一样同样可以将整个服务定义到最后调用服务，拆分为三大步。
+</code></pre>
+<blockquote>
+<p><strong>1、定义服务</strong></p>
+<p>定义服务的核心接口，并在服务接口上加上@SPI注解，如果服务要实现自适应拓展可在接口方法上加上@Adaptive注解或是在接口实现类上加@Adaptive注解（这实际属性提供服务部分）。</p>
+<p><strong>2、提供服务</strong></p>
+<p>实现服务接口，并在META-INF/dubbo/internal/或META-INF/dubbo/或META-INF/services/目录下面创建名为服务接口名的配置文件。配置文件的内容为键值对，key为拓展实现类的键，值为拓展实现类的全限定类名。如果要实现自适应拓展功能可在类上加@Adaptive注解。下面是Dubbo中com.alibaba.dubbo.common.compiler.Compiler 接口实现类对应配置文件的具体内容。</p>
+<pre class="line-numbers language-java"><code class="language-java">adaptive<span class="token operator">=</span>com<span class="token punctuation">.</span>alibaba<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>compiler<span class="token punctuation">.</span>support<span class="token punctuation">.</span>AdaptiveCompiler
+jdk<span class="token operator">=</span>com<span class="token punctuation">.</span>alibaba<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>compiler<span class="token punctuation">.</span>support<span class="token punctuation">.</span>JdkCompiler
+javassist<span class="token operator">=</span>com<span class="token punctuation">.</span>alibaba<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>compiler<span class="token punctuation">.</span>support<span class="token punctuation">.</span>JavassistCompiler
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p><strong>3、调用服务</strong></p>
+<p>与JDK的SPI机制类似，服务实例的创建与调用都有一个核心类负责，Dubbo中该类为ExtensionLoader。通过ExtensionLoader#getExtensionLoader方法获取对应的ExtensionLoader实例，然后再通过Extension的名称调用ExtensionLoader#getExtension方法获取具体的接口实现类，最后调用接口定义的方法完成服务调用 。下面展示了如何通过ExtensionLoader获取Dubbo的Compiler实现类中JavassistCompiler实现，然后调用Compiler#compile方法将源代码编译为字节码并加载到JVM中生成对应的Class类实例。</p>
+<pre class="line-numbers language-java"><code class="language-java">ExtensionLoader<span class="token operator">&lt;</span>Compiler<span class="token operator">></span> loader <span class="token operator">=</span> ExtensionLoader<span class="token punctuation">.</span><span class="token function">getExtensionLoader</span><span class="token punctuation">(</span>Compiler<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">//javassist为com.alibaba.dubbo.common.compiler.Compiler文件中JavassistCompiler实现的Key </span>
+Compiler compiler <span class="token operator">=</span> loader<span class="token punctuation">.</span><span class="token function">getExtension</span><span class="token punctuation">(</span><span class="token string">"javassist"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+compiler<span class="token punctuation">.</span><span class="token function">compile</span><span class="token punctuation">(</span><span class="token string">"resource code ..."</span><span class="token punctuation">,</span> Thread<span class="token punctuation">.</span><span class="token function">currentThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getContextClassLoader</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+</blockquote>
+<p>实际上面调用服务的过程中是通过策略模式实现的，当首次传Extension的名称时ExtensionLoader才会去配置文件中找到相应的限制定类名，并将该类加载到JVM然后通过反射创建对象，创建完后会将创建好的实现缓存在全局的ConcurrentMap中，这个过程完成了实例的按需创建。</p>
+<h5 id="2-2-Dubbo-中SPI自适应拓展用法"><a href="#2-2-Dubbo-中SPI自适应拓展用法" class="headerlink" title="2.2 Dubbo 中SPI自适应拓展用法"></a>2.2 Dubbo 中SPI自适应拓展用法</h5><p>​        Spring中依赖注入与AOP是整个框架的核心精髓，同样Dubbo的SPI中的依赖注入与AOP也是实现”微内核+插件”的精髓。在讲如何使用Dubbo 中SPI自适应拓展时，先来讲一下自适应拓展，因为Dubbo在依赖注入时会用到自适应拓展。自适应拓展是什么？简单地理解就是在拓展接口方法被调用时，先调用一个代理类，然后再由代理类通过策略模式根据运行时传入的参数决定动态哪一个创建扩展实现并最终调用其方法。看起有点像普通的策略模式，通过参数不同然后定位到接口的某一具体实现，但实际上Dubbo的SPI的自适应拓展要更智能点。Dubbo首先会根据调用拓展接口时传入的参数为拓展接口生成具体有代理功能的代码，然后通过javassist 或 jdk 编译这段代码，并将对应的类加载到JVM，最后通过反射创建拓展接口的代理实例。而代理实例内部则采用了普通的策略模式，根据根据调用拓展接口时传入的参数去决定具体要调用哪一个拓展实现。</p>
+<p>​        上面讲到Dubbo的SPI机制会根据调用拓展接口传入的参数决定使用哪一个具体拓展实现类。Dubbo为了形成统一的契约机制，定义了URL模型来完成整个框架中核心参数的传递与获取。URL模型与我们熟悉的URL（Uniform Resource Locators）很类似，这不细讲可以参数Dubbo 官网 <a target="_blank" rel="noopener" href="https://dubbo.apache.org/zh/blog/2019/10/17/dubbo-%E4%B8%AD%E7%9A%84-url-%E7%BB%9F%E4%B8%80%E6%A8%A1%E5%9E%8B/">Dubbo 中的 URL 统一模型</a>。在使用自适应拓展时，要接口声明的方法要包括类型为URL参数或者参数内有getURL方法用于获取URL，否则运行时将抛出异常。要从接口声明的方法的参数列表中获取URL，主要是为了通过URL去获取扩展类的键，也就是为了定位具体要调用哪个扩展实现。</p>
+<p>​        自适应拓展使用上与Dubbo中SPI基本用法的区别主要是要在方法上加 @Adapitve注解，同时方法参数列表中要有URL类型参数或者能通过参数的getURL方法获取URL。@Adapitve注解后面分析源时会详细讲，@Adapitve可标注在方法或类上，标注方法表示Dubbo会自动为其生成自适应类（实际就是代理类），标注在类上表示自适应类要人工实现。Dubbbo内部仅有两个类被 Adaptive 注解，分别是 AdaptiveExtensionFactory 和AdaptiveCompiler。来通过一个例子对自适应拓展有更加直观的认识。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token annotation punctuation">@SPI</span>
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">EngineMaker</span> <span class="token punctuation">{</span>
+    <span class="token annotation punctuation">@Adapitve</span>
+    Engine <span class="token function">makeEngine</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Dubbo 会为EngineMaker接口生成具体代理功能的代码，下面是Dubbo为EngineMaker接口生成的代理类代码：</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">EngineMaker</span>$Adaptive <span class="token keyword">implements</span> <span class="token class-name">EngineMaker</span> <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> Wheel <span class="token function">makeEngine</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>url <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span><span class="token string">"url == null"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+          <span class="token comment" spellcheck="true">// 1.从 URL 中获取 EngineMaker 名称</span>
+        String engineMakerName <span class="token operator">=</span> url<span class="token punctuation">.</span><span class="token function">getParameter</span><span class="token punctuation">(</span><span class="token string">"engine.maker"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>engineMakerName <span class="token operator">==</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">IllegalArgumentException</span><span class="token punctuation">(</span><span class="token string">"engineMakerName == null"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 2.通过 SPI 加载具体的 EngineMaker</span>
+        EngineMaker engineMaker <span class="token operator">=</span> ExtensionLoader
+            <span class="token punctuation">.</span><span class="token function">getExtensionLoader</span><span class="token punctuation">(</span>EngineMaker<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getExtension</span><span class="token punctuation">(</span>engineMakerName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// 3.调用目标方法</span>
+        <span class="token keyword">return</span> engineMaker<span class="token punctuation">.</span><span class="token function">makeEngine</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>EngineMaker$Adaptive 是一个代理类，EngineMaker$Adaptive将代理EngineMaker#makeEngine 方法，在makeEngine方法内部通过参数URL获取具体的EngineMaker的拓展实现的扩展名（Dubbo中SPI机制配置文件中的key），再通过SPI加载具体的EngineMaker实现类，最后调用实现类实例的makeEngine 方法。</p>
+<h5 id="2-3-Dubbo-中SPI依赖注入与AOP用法"><a href="#2-3-Dubbo-中SPI依赖注入与AOP用法" class="headerlink" title="2.3 Dubbo 中SPI依赖注入与AOP用法"></a>2.3 Dubbo 中SPI依赖注入与AOP用法</h5><p>​        按照前面说的方式使用Dubbo中的SPI机制去调用具体的扩展实现时，Dubbo的SPI机制内部在加载创建实例后，会检测具体的拓展实现类内部所有的只有一个参数的public的setXXX方法，然后通过ExtensionFactory尝试获取对应的扩展实现并完成依赖注入。下面通过一个详细的例子来看一下，CarMaker的拓展类ElectricCarMaker内部依赖了EngineMaker，并暴露了setEngineMaker方法以便Dubbo注入依赖的EngineMaker。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//Engine接口</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">Engine</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//FuelEngine实现</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">FuelEngine</span> <span class="token keyword">implements</span> <span class="token class-name">Engine</span> <span class="token punctuation">{</span>
+  <span class="token keyword">public</span> <span class="token function">FuelEngine</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"FuelEngine implementation!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//ElectricEngine实现</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">ElectricEngine</span> <span class="token keyword">implements</span> <span class="token class-name">Engine</span> <span class="token punctuation">{</span>
+  <span class="token keyword">public</span> <span class="token function">ElectricEngine</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"ElectricEngine implementation!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//Car接口</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">Car</span> <span class="token punctuation">{</span>
+  <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//ElectricCar实现</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">ElectricCar</span> <span class="token keyword">implements</span> <span class="token class-name">Car</span> <span class="token punctuation">{</span>
+  <span class="token keyword">private</span> <span class="token keyword">final</span> Engine engine<span class="token punctuation">;</span>
+  <span class="token keyword">public</span> <span class="token function">ElectricCar</span><span class="token punctuation">(</span>Engine engine<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>engine <span class="token operator">=</span> engine<span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"ElectricCar implementation!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"ElectricCar run with "</span> <span class="token operator">+</span>  engine<span class="token punctuation">.</span><span class="token function">getClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//CarMaker接口</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>URL<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>extension<span class="token punctuation">.</span>SPI<span class="token punctuation">;</span>
+<span class="token annotation punctuation">@SPI</span>
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">CarMaker</span> <span class="token punctuation">{</span>
+  Car <span class="token function">makeCar</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//ElectricCarMaker实现</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>URL<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">ElectricCarMaker</span> <span class="token keyword">implements</span> <span class="token class-name">CarMaker</span> <span class="token punctuation">{</span>
+  <span class="token keyword">public</span> EngineMaker engineMaker<span class="token punctuation">;</span>
+  <span class="token annotation punctuation">@Override</span>
+  <span class="token keyword">public</span> ElectricCar <span class="token function">makeCar</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">ElectricCar</span><span class="token punctuation">(</span>engineMaker<span class="token punctuation">.</span><span class="token function">makeEngine</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">setEngineMaker</span><span class="token punctuation">(</span>EngineMaker engineMaker<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Inject property engineMaker by Dubbo SPI!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>engineMaker <span class="token operator">=</span> engineMaker<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//EngineMaker接口</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>URL<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>extension<span class="token punctuation">.</span>Adaptive<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>extension<span class="token punctuation">.</span>SPI<span class="token punctuation">;</span>
+<span class="token annotation punctuation">@SPI</span>
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">EngineMaker</span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">//指URL模型要传入的参数名称为engineMakerType或engineType</span>
+  <span class="token annotation punctuation">@Adaptive</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"engineMakerType"</span><span class="token punctuation">,</span> <span class="token string">"engineType"</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+  Engine <span class="token function">makeEngine</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//ElectricEngineMaker实现</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>URL<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">ElectricEngineMaker</span> <span class="token keyword">implements</span> <span class="token class-name">EngineMaker</span> <span class="token punctuation">{</span>
+  <span class="token annotation punctuation">@Override</span>
+  <span class="token keyword">public</span> ElectricEngine <span class="token function">makeEngine</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">ElectricEngine</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//FuelEngineMaker实现</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>URL<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">FuelEngineMaker</span> <span class="token keyword">implements</span> <span class="token class-name">EngineMaker</span> <span class="token punctuation">{</span>
+  <span class="token annotation punctuation">@Override</span>
+  <span class="token keyword">public</span> FuelEngine <span class="token function">makeEngine</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">FuelEngine</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>META-INF/services下面有两个配置文件org.knight.CarMaker内容为</p>
+<blockquote>
+<p>electricCarMaker=org.knight.ElectricCarMaker</p>
+</blockquote>
+<p>org.knight.EngineMaker内容为</p>
+<blockquote>
+<p>electricEngineMaker=org.knight.ElectricEngineMaker<br>fuelEngineMaker=org.knight.FuelEngineMaker</p>
+</blockquote>
+<p>执行操作的主函数代码如下</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token comment" spellcheck="true">//主函数</span>
+<span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>URL<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>extension<span class="token punctuation">.</span>ExtensionLoader<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Main</span> <span class="token punctuation">{</span>
+  <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span>String args<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//1、获取对应ExtensionLoader实现</span>
+    ExtensionLoader<span class="token operator">&lt;</span>CarMaker<span class="token operator">></span> extensionLoader <span class="token operator">=</span> ExtensionLoader<span class="token punctuation">.</span><span class="token function">getExtensionLoader</span><span class="token punctuation">(</span>CarMaker<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">//2、通过扩展类的名（配置文件中的key）, 加载并创建对应CarMaker扩展实现（ElectricEngineMaker）。</span>
+    CarMaker carMaker <span class="token operator">=</span> extensionLoader<span class="token punctuation">.</span><span class="token function">getExtension</span><span class="token punctuation">(</span><span class="token string">"electricCarMaker"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">//3、通过URL传递engineMakerType参数，engineMakerType参数的值为electricEngineMaker</span>
+    URL url <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">URL</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">,</span> <span class="token number">8080</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">addParameter</span><span class="token punctuation">(</span><span class="token string">"engineMakerType"</span><span class="token punctuation">,</span> <span class="token string">"electricEngineMaker"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">//4、调用具体扩展实现类的方法（实际调用ElectricEngineMaker#makeCar方法）</span>
+    Car car <span class="token operator">=</span> carMaker<span class="token punctuation">.</span><span class="token function">makeCar</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">//5、执行Car#run方法</span>
+    car<span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上面的代码执行完后得出以下结果</p>
+<blockquote>
+<p>Inject property engineMaker by Dubbo SPI!<br>ElectricEngine implementation!<br>ElectricCar implementation!<br>ElectricCar run with class org.knight.ElectricEngine</p>
+</blockquote>
+<p>可以看到Dubbo为CarMaker的拓展类ElectricCarMaker注入了依赖的EngineMaker对象，并且实现注入的EngineMaker类型为ElectricEngineMaker而不是FuelEngineMaker。上面比较关键代码片段是</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@SPI</span>
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">EngineMaker</span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">//指URL模型要传入的参数名称为engineMakerType或engineType</span>
+  <span class="token annotation punctuation">@Adaptive</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"engineMakerType"</span><span class="token punctuation">,</span> <span class="token string">"engineType"</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+  Engine <span class="token function">makeEngine</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>与</p>
+<pre><code>//3、通过URL传递engineMakerType参数，engineMakerType参数的值为electricEngineMaker
+URL url = new URL(&quot;&quot;, &quot;&quot;, 8080).addParameter(&quot;engineMakerType&quot;, &quot;electricEngineMaker&quot;);
+</code></pre>
+<p>EngineMaker#makeEngine方法上的@Adaptive注解的值engineMakerType与engineType规定要通过参数engineMakerType或engineType去URL模型中获取EngineMaker自适应扩展的扩展名。如果URL模型中参数engineMakerType对应的值非空，则Dubbo优先从URL中获取该参数值作为扩展名；否则Dubbo再考虑从URL模型中获取参数engineType，URL模型中参数engineType对应的值非空，则Dubbo从URL中获取参数engineType值作为扩展名；最后Dubbo会采用默认的扩展名，也就是@SPI注解的值作为扩展名作为兜底的扩展名，当然提前是默认的扩展名要存在（上面的情况没有指定默认的扩展名，@SPI(“electricEngineMaker”) 代表将electricEngineMaker作为默认的扩展名）。当所有情况当不符合时，那么Dubbo就无法获取扩展名，也无法完成后面的依赖注入这时会直接抛出异常。Dubbo获取到EngineMaker对应的扩展名后，则会从META-INF/services/org.knight.EngineMaker配置文件中用扩展名去找到具体的全限定类名，并加载类到JVM同时通过反射创建对象，而后再将ElectricEngineMaker实例注入到ElectricCarMaker内。</p>
+<p>​        那如果EngineMaker#makeEngine方法上的@Adaptive注解的值为空时Dubbo会如何处理呢？此时Dubbo会将EngineMaker按其内部规则转化为engine.maker作为URL中扩展名的参数，然后通过该参数即engine.maker去从RUL模型中获取值作为扩展名。再结合@Adaptive注解 value()上的注释体会一下上面的分析。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token annotation punctuation">@Documented</span>
+<span class="token annotation punctuation">@Retention</span><span class="token punctuation">(</span>RetentionPolicy<span class="token punctuation">.</span>RUNTIME<span class="token punctuation">)</span>
+<span class="token annotation punctuation">@Target</span><span class="token punctuation">(</span><span class="token punctuation">{</span>ElementType<span class="token punctuation">.</span>TYPE<span class="token punctuation">,</span> ElementType<span class="token punctuation">.</span>METHOD<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">public</span> @<span class="token keyword">interface</span> <span class="token class-name">Adaptive</span> <span class="token punctuation">{</span>
+    String<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">default</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>String[] value() default {};上面的注释如下</p>
+<pre class="line-numbers language-java"><code class="language-java">Decide which target extension to be injected<span class="token punctuation">.</span> The name of the target extension is decided by the parameter passed in the URL<span class="token punctuation">,</span> and the parameter names are given by <span class="token keyword">this</span> method<span class="token punctuation">.</span>
+If the specified parameters are not found from URL<span class="token punctuation">,</span> then the <span class="token keyword">default</span> extension will be used <span class="token keyword">for</span> dependency <span class="token function">injection</span> <span class="token punctuation">(</span>specified in its <span class="token keyword">interface</span>'s SPI<span class="token punctuation">)</span><span class="token punctuation">.</span>
+For example<span class="token punctuation">,</span> given String<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token punctuation">{</span><span class="token string">"key1"</span><span class="token punctuation">,</span> <span class="token string">"key2"</span><span class="token punctuation">}</span><span class="token operator">:</span>
+find parameter <span class="token string">'key1'</span> in URL<span class="token punctuation">,</span> use its value as the extension's name
+<span class="token keyword">try</span> <span class="token string">'key2'</span> <span class="token keyword">for</span> extension<span class="token string">'s name if '</span>key1' is not <span class="token function">found</span> <span class="token punctuation">(</span>or its value is empty<span class="token punctuation">)</span> in URL
+use <span class="token keyword">default</span> extension <span class="token keyword">if</span> <span class="token string">'key2'</span> doesn't exist either
+otherwise<span class="token punctuation">,</span> <span class="token keyword">throw</span> IllegalStateException
+If the parameter names are empty<span class="token punctuation">,</span> then a <span class="token keyword">default</span> parameter name is generated from <span class="token keyword">interface</span><span class="token string">'s class name with the rule: divide classname from capital char into several parts, and separate the parts with dot '</span><span class="token punctuation">.</span>'<span class="token punctuation">,</span> <span class="token keyword">for</span> example<span class="token punctuation">,</span> <span class="token keyword">for</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>xxx<span class="token punctuation">.</span>YyyInvokerWrapper<span class="token punctuation">,</span> the generated name is String<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token punctuation">{</span><span class="token string">"yyy.invoker.wrapper"</span><span class="token punctuation">}</span><span class="token punctuation">.</span>
+Returns<span class="token operator">:</span>parameter names in URL
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>可以参照下面的流程图，仔细理解一下如何从URL模型中获取扩展名，然后用扩展名去加载类。实际整个流程的核心目标是确定URL模型中获取扩展名的参数名，即通过什么参数从URL模型中获取扩展名。</p>
+<p><img src="https://gitee.com/0909/blog/raw/master/img/20220113100031.png"></p>
+<p>Dubbo中SPI机制的依赖注入如何使用已分析完了，下面看看该如何去使用Dubbo中SPI机制的AOP。Spring中的AOP本质上是代理，Dubbo中SPI机制的AOP本质上也是代理，只不过这个代理是静态的，即要先创建代理类然后才能在实际类执行前后作相应的增强。这里先创建EngineMaker的代理类也就是AOP执行类，代码如下。</p>
+<pre class="line-numbers language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>knight<span class="token punctuation">;</span>
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>apache<span class="token punctuation">.</span>dubbo<span class="token punctuation">.</span>common<span class="token punctuation">.</span>URL<span class="token punctuation">;</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">EngineMakerWrapper</span> <span class="token keyword">implements</span> <span class="token class-name">EngineMaker</span> <span class="token punctuation">{</span>
+  <span class="token keyword">private</span> <span class="token keyword">final</span> EngineMaker engineMaker<span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">//公共的构建函数参数声明时一定要有被增强的接口作为唯一的参数，这是Dubbo实现AOP的入口</span>
+  <span class="token keyword">public</span> <span class="token function">EngineMakerWrapper</span><span class="token punctuation">(</span>EngineMaker engineMaker<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>engineMaker <span class="token operator">=</span> engineMaker<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token annotation punctuation">@Override</span>
+  <span class="token keyword">public</span> Engine <span class="token function">makeEngine</span><span class="token punctuation">(</span>URL url<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Before Advice by EngineMakerWrapper!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    Engine engine <span class="token operator">=</span> engineMaker<span class="token punctuation">.</span><span class="token function">makeEngine</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"After Advice by EngineMakerWrapper!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> engine<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>AOP类EngineMakerWrapper代理了EngineMaker，并在执行对应makeEngine方法前后加上了简单的增强。现在只要在原来的META-INF/services/org.knight.EngineMaker配置文件中新增一行如下配置便可使AOP功能生效。</p>
+<blockquote>
+<p>engineMakerWrapper=org.knight.EngineMakerWrapper</p>
+</blockquote>
+<p>然后再次执行之前的main函数得到如下的输出。</p>
+<blockquote>
+<p>Inject property engineMaker by Dubbo SPI!<br>Before Advice by EngineMakerWrapper!<br>ElectricEngine implementation!<br>After Advice by EngineMakerWrapper!<br>ElectricCar implementation!<br>ElectricCar run with class org.knight.ElectricEngine</p>
+</blockquote>
+<p>编写Dubbo中SPI机制的AOP对应的代理类时，一定要有公共的构造函数，且构建函数参数声明时一定要有被增强的接口作为唯一的参数，否则Dubbo无法实现AOP，同时在配置文件中要将该代理类加入。虽然在配置文件中通过键值对配置了AOP对应的代理类，但却不能像正常扩展类那样通过扩展名获取到对应的实现。</p>
+<pre class="line-numbers language-java"><code class="language-java">ExtensionLoader<span class="token operator">&lt;</span>EngineMaker<span class="token operator">></span> loader <span class="token operator">=</span> ExtensionLoader<span class="token punctuation">.</span><span class="token function">getExtensionLoader</span><span class="token punctuation">(</span>EngineMaker<span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">/**
+ * META-INF/services/org.knight.EngineMaker配置文件有对应的
+ * engineMakerWrapper=org.knight.EngineMakerWrapper，但获取不到engineMaker，其值为null
+ **/</span>
+EngineMaker engineMaker <span class="token operator">=</span> loader<span class="token punctuation">.</span><span class="token function">getExtension</span><span class="token punctuation">(</span><span class="token string">"engineMakerWrapper"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上面的代码执行后将抛出异常提示<em>No such extension org.knight.EngineMaker by name engineMakerWrapper</em></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>​        本文从JDK原生的SPI机制开始由浅及深逐步地介绍了Dubbo中SPI机制，并通过示例展示了如何运用Dubbo中SPI机制的依赖注入、AOP、自适应拓展，本中重点分析了如何从URL模型与自适应拓展注解@Adaptive来确定要最终要获取的扩展类。下篇中将结合源码深入分析了依赖注入、AOP、自适应拓展是如何实现的。希望看完本文你会有所收获，限于本人能力有限文中不正确还望指正。最后欢迎关注个人公众号洞悉源码。</p>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><p> <a target="_blank" rel="noopener" href="https://dubbo.apache.org/zh/blog/2019/10/17/dubbo-%E4%B8%AD%E7%9A%84-url-%E7%BB%9F%E4%B8%80%E6%A8%A1%E5%9E%8B/">Dubbo 中的 URL 统一模型</a></p>
+<p><a target="_blank" rel="noopener" href="https://dubbo.apache.org/zh/docsv2.7/dev/source/dubbo-spi/">Dubbo SPI</a></p>
+<p><a target="_blank" rel="noopener" href="https://dubbo.apache.org/zh/docsv2.7/dev/source/adaptive-extension/">SPI 自适应拓展</a></p>
+<h4 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h4><p>​        原创不易，点赞、在看、转发是对我莫大的鼓励，关注公众号洞悉源码是对我最大的支持。同时相信我会分享更多干货，我同你一起成长，我同你一起进步。</p>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">叶易</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="https://yeweigen.cn/2022/01/11/%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90Dubbo%20SPI%20%E6%9C%BA%E5%88%B6%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AE%9E%E8%B7%B5%E5%BA%94%E7%94%A8/">https://yeweigen.cn/2022/01/11/%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90Dubbo%20SPI%20%E6%9C%BA%E5%88%B6%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AE%9E%E8%B7%B5%E5%BA%94%E7%94%A8/</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">叶易</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/Dubbo/">
+                                    <span class="chip bg-color">Dubbo</span>
+                                </a>
+                            
+                                <a href="/tags/SPI/">
+                                    <span class="chip bg-color">SPI</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="wechat,douban" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <style>
+    #reward {
+        margin: 40px 0;
+        text-align: center;
+    }
+
+    #reward .reward-link {
+        font-size: 1.4rem;
+        line-height: 38px;
+    }
+
+    #reward .btn-floating:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #rewardModal {
+        width: 320px;
+        height: 350px;
+    }
+
+    #rewardModal .reward-title {
+        margin: 15px auto;
+        padding-bottom: 5px;
+    }
+
+    #rewardModal .modal-content {
+        padding: 10px;
+    }
+
+    #rewardModal .close {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 1.3rem;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    #rewardModal .close:hover {
+        color: #ef5350;
+        transform: scale(1.3);
+        -moz-transform:scale(1.3);
+        -webkit-transform:scale(1.3);
+        -o-transform:scale(1.3);
+    }
+
+    #rewardModal .reward-tabs {
+        margin: 0 auto;
+        width: 210px;
+    }
+
+    .reward-tabs .tabs {
+        height: 38px;
+        margin: 10px auto;
+        padding-left: 0;
+    }
+
+    .reward-content ul {
+        padding-left: 0 !important;
+    }
+
+    .reward-tabs .tabs .tab {
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .reward-tabs .tab a {
+        color: #fff;
+        background-color: #ccc;
+    }
+
+    .reward-tabs .tab a:hover {
+        background-color: #ccc;
+        color: #fff;
+    }
+
+    .reward-tabs .wechat-tab .active {
+        color: #fff !important;
+        background-color: #22AB38 !important;
+    }
+
+    .reward-tabs .alipay-tab .active {
+        color: #fff !important;
+        background-color: #019FE8 !important;
+    }
+
+    .reward-tabs .reward-img {
+        width: 210px;
+        height: 210px;
+    }
+</style>
+
+<div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/medias/reward/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/medias/reward/wechat.png" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: 'dzzOMaA4EOg0bP1nuqJdYc8B-gzGzoHsz',
+        appKey: 'rFjC9NRJ6RBOs0vKzhuW4v5L',
+        notify: 'false' === 'true',
+        verify: 'false' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'zh-cn',
+        placeholder: 'just go go'
+    });
+</script>
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
+            <div class="card">
+                <a href="/2022/01/11/%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90Dubbo%20SPI%20%E6%9C%BA%E5%88%B6%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AE%9E%E8%B7%B5%E5%BA%94%E7%94%A8/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/21.jpg" class="responsive-img" alt="深入分析Dubbo SPI 机制实现原理之实践应用">
+                        
+                        <span class="card-title">深入分析Dubbo SPI 机制实现原理之实践应用</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-01-11
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Dubbo/" class="post-category">
+                                    Dubbo
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Dubbo/">
+                        <span class="chip bg-color">Dubbo</span>
+                    </a>
+                    
+                    <a href="/tags/SPI/">
+                        <span class="chip bg-color">SPI</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2021/12/03/%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/10.jpg" class="responsive-img" alt="深入分析G1垃圾收集器实现原理">
+                        
+                        <span class="card-title">深入分析G1垃圾收集器实现原理</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-12-03
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/JVM/" class="post-category">
+                                    JVM
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/G1/">
+                        <span class="chip bg-color">G1</span>
+                    </a>
+                    
+                    <a href="/tags/Tri-color-Marking/">
+                        <span class="chip bg-color">Tri-color Marking</span>
+                    </a>
+                    
+                    <a href="/tags/RSet/">
+                        <span class="chip bg-color">RSet</span>
+                    </a>
+                    
+                    <a href="/tags/CSet/">
+                        <span class="chip bg-color">CSet</span>
+                    </a>
+                    
+                    <a href="/tags/Refinement-Thread/">
+                        <span class="chip bg-color">Refinement Thread</span>
+                    </a>
+                    
+                    <a href="/tags/Write-Barrier/">
+                        <span class="chip bg-color">Write Barrier</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: 叶易的博客<br />'
+            + '文章作者: 叶易<br />'
+            + '文章链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归叶易（https://yeweigen.cn/）所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+    <footer class="page-footer bg-color">
+    
+        <link rel="stylesheet" href="/libs/aplayer/APlayer.min.css">
+<style>
+    .aplayer .aplayer-lrc p {
+        
+        display: none;
+        
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 16px !important;
+    }
+
+    .aplayer .aplayer-lrc p.aplayer-lrc-current {
+        
+        display: none;
+        
+        font-size: 15px;
+        color: #7a309a;
+    }
+
+    
+</style>
+<div class="">
+    
+    <div class="row">
+        <meting-js class="col l8 offset-l2 m10 offset-m1 s12"
+                   server="tencent"
+                   type="song"
+                   id="002OwQWI1D1jXP"
+                   fixed='true'
+                   autoplay='true'
+                   theme='#7a309a'
+                   loop='all'
+                   order='random'
+                   preload='auto'
+                   volume='0.7'
+                   list-folded='true'
+        >
+        </meting-js>
+        <!-- <meting-js  class="col l8 offset-l2 m10 offset-m1 s12" 
+          auto="https://y.qq.com/n/yqq/song/001RGrEX3ija5X.html">
+        </meting-js> -->
+    </div>
+</div>
+
+<script src="/libs/aplayer/APlayer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+
+    
+    <div class="container row center-align" style="margin-bottom: 0px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2021-2022</span>
+            
+            <span id="year">2021</span>
+            <a href="/about" target="_blank">叶易</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            <br>
+            
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            
+            <br>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/knight0707" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:yeweigen0909@126.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Baidu Analytics -->
+
+    <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+    
+    <script src="/libs/others/clicklove.js" async="async"></script>
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+    
+
+	
+    
+
+    
+
+    
+
+    
+    <script src="/libs/instantpage/instantpage.js" type="module"></script>
+    
+
+</body>
+
+</html>
